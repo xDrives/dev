@@ -1,0 +1,2653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Geometry Pro – Core Suite</title>
+    <style>
+        :root {
+            --bg: #f5f2ed;
+            --surface: #ffffff;
+            --text: #2c2c2c;
+            --text-secondary: #5c5c5c;
+            --accent: #e07b4c;
+            --blue: #4a90d9;
+            --green: #5a9e6f;
+            --orange: #e89440;
+            --violet: #8b6fc0;
+            --border: #ddd8d0;
+            --radius: 14px;
+            --transition: 0.2s;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        .dark-mode {
+            --bg: #1e1e1e;
+            --surface: #2d2d2d;
+            --text: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --border: #444;
+            --accent: #ff8c5a;
+            --blue: #6aa9ff;
+            --green: #6fcf97;
+            --orange: #ffa64d;
+            --violet: #b39ddb;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            user-select: none;
+            transition: background 0.3s, color 0.3s;
+        }
+        .app-container {
+            background: var(--surface);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 1500px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: background 0.3s;
+        }
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            gap: 8px;
+            flex-wrap: wrap;
+            background: var(--surface);
+            transition: border-color 0.3s;
+        }
+        .app-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .toolbar {
+            display: flex;
+            gap: 3px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .btn {
+            padding: 5px 10px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            background: var(--surface);
+            cursor: pointer;
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: var(--text);
+            transition: all var(--transition);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-family: inherit;
+        }
+        .btn:hover {
+            background: #f0ede8;
+            border-color: #cbc5bd;
+        }
+        .btn.active {
+            background: #fef8f4;
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .btn.danger {
+            border-color: #e0c8c0;
+            color: #b05040;
+        }
+        .btn.success {
+            border-color: var(--green);
+            color: var(--green);
+        }
+        .btn.violet {
+            border-color: var(--violet);
+            color: var(--violet);
+        }
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .separator {
+            width: 1px;
+            height: 24px;
+            background: var(--border);
+            margin: 0 4px;
+        }
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 0.68rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .toggle-label input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .snap-panel {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-left: 6px;
+        }
+        .canvas-wrapper {
+            position: relative;
+            flex: 1;
+            min-height: 520px;
+            background: #fdfdfc;
+            border-bottom: 1px solid var(--border);
+            cursor: crosshair;
+            transition: background 0.3s;
+        }
+        .dark-mode .canvas-wrapper {
+            background: #252525;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .info-panel {
+            position: absolute;
+            right: 14px;
+            top: 14px;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(10px);
+            border-radius: 14px;
+            padding: 10px 14px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            font-size: 0.75rem;
+            max-width: 230px;
+            border: 1px solid var(--border);
+            z-index: 10;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .dark-mode .info-panel {
+            background: rgba(45, 45, 45, 0.94);
+        }
+        .info-title {
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            color: var(--accent);
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }
+        .info-label {
+            color: var(--text-secondary);
+        }
+        .info-value {
+            font-weight: 600;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 18px;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            transition: border-color 0.3s;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .settings-panel {
+            position: absolute;
+            left: 14px;
+            bottom: 40px;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 14px;
+            padding: 12px 14px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            font-size: 0.72rem;
+            border: 1px solid var(--border);
+            display: none;
+            z-index: 20;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 200px;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .dark-mode .settings-panel {
+            background: rgba(45, 45, 45, 0.97);
+        }
+        .settings-panel.visible {
+            display: flex;
+        }
+        .settings-panel input[type="color"] {
+            width: 22px;
+            height: 22px;
+            border: none;
+            padding: 0;
+            background: none;
+            cursor: pointer;
+        }
+        .settings-panel select,
+        .settings-panel input[type="number"] {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-size: 0.7rem;
+        }
+        .settings-row {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .settings-row label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+        .settings-row input[type="checkbox"] {
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .export-group {
+            display: flex;
+            gap: 3px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.4s;
+            pointer-events: none;
+            backdrop-filter: blur(6px);
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        @media (max-width: 900px) {
+            .app-header {
+                padding: 8px 10px;
+            }
+            .toolbar .btn {
+                font-size: 0.65rem;
+                padding: 4px 7px;
+            }
+            .snap-panel .toggle-label {
+                font-size: 0.6rem;
+            }
+            .info-panel {
+                right: 8px;
+                top: 8px;
+                max-width: 170px;
+                font-size: 0.65rem;
+                padding: 8px 10px;
+            }
+            .settings-panel {
+                left: 8px;
+                bottom: 30px;
+                min-width: 160px;
+                padding: 10px;
+            }
+        }
+        @media (max-width: 600px) {
+            .app-title {
+                font-size: 0.9rem;
+            }
+            .toolbar .btn {
+                font-size: 0.58rem;
+                padding: 3px 5px;
+            }
+            .snap-panel .toggle-label {
+                font-size: 0.55rem;
+            }
+            .status-bar {
+                font-size: 0.6rem;
+                padding: 4px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="app-container" id="appContainer">
+        <header class="app-header">
+            <div class="app-title">📐 Geometry Pro</div>
+            <div class="toolbar">
+                <button class="btn active" id="modePolygon">🔷 Poly</button>
+                <button class="btn" id="modeCircle">⭕ Circle</button>
+                <button class="btn" id="modeConnect">🔗 Connect</button>
+                <button class="btn" id="modeSplit">✂️ Split</button>
+                <button class="btn" id="modeDelete">🗑️ Del</button>
+                <button class="btn" id="modeMove">✋ Move</button>
+                <button class="btn" id="modeRect">▭ Rect</button>
+                <button class="btn" id="modeNgon">⬠ N‑gon</button>
+                <button class="btn" id="modeEllipse">⬭ Ellipse</button>
+                <button class="btn" id="modeDimension">📐 Dim</button>
+                <button class="btn" id="modeText">🔤 Text</button>
+                <div class="separator"></div>
+                <button class="btn" id="btnClose">🔄 Close</button>
+                <button class="btn" id="btnNew">➕ New</button>
+                <button class="btn" id="btnUndo" disabled>↩️ Undo</button>
+                <button class="btn" id="btnRedo" disabled>↪️ Redo</button>
+                <button class="btn danger" id="btnClear">🗑️ Clear</button>
+            </div>
+            <div class="snap-panel">
+                <span style="font-size:0.65rem;font-weight:500;">Snap:</span>
+                <label class="toggle-label"><input type="checkbox" id="snapGrid"> Grid</label>
+                <label class="toggle-label"><input type="checkbox" id="snapPoint" checked> Pts</label>
+                <label class="toggle-label"><input type="checkbox" id="snapLine"> Line</label>
+                <label class="toggle-label"><input type="checkbox" id="snapMid" checked> Mid</label>
+                <label class="toggle-label"><input type="checkbox" id="snapInter"> Inter</label>
+                <label class="toggle-label"><input type="checkbox" id="snapTangent"> Tang</label>
+                <label class="toggle-label"><input type="checkbox" id="snapPerp"> Perp</label>
+                <label class="toggle-label"><input type="checkbox" id="snapEllipseTang"> E‑Tang</label>
+                <label class="toggle-label"><input type="checkbox" id="snapParallel"> ∥</label>
+                <label class="toggle-label"><input type="checkbox" id="snapExtend"> Ext</label>
+                <label class="toggle-label"><input type="checkbox" id="snapObj"> Obj</label>
+            </div>
+            <div class="export-group">
+                <button class="btn success" id="btnSaveJSON">💾 JSON</button>
+                <button class="btn success" id="btnLoadJSON">📂 Load</button>
+                <button class="btn violet" id="btnSettings">⚙️</button>
+            </div>
+        </header>
+
+        <div class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="geomCanvas"></canvas>
+            <div class="info-panel" id="infoPanel">
+                <div class="info-title">📊 Info</div>
+                <div id="infoContent">Draw something</div>
+            </div>
+            <div class="settings-panel" id="settingsPanel">
+                <div class="settings-row"><b>Line:</b> <input type="color" id="lineColor" value="#3a3a3a"> Width <input type="number" id="lineWidth" value="2.2" step="0.1" min="0.5" max="10" style="width:56px">
+                    <select id="lineDash"><option value="">Solid</option><option value="6,4">Dashed</option><option value="2,2">Dotted</option><option value="10,5,2,5">Dash-dot</option></select>
+                </div>
+                <div class="settings-row"><b>Point:</b> Style <select id="pointStyle"><option value="circle">● Circle</option><option value="square">■ Square</option><option value="cross">✚ Cross</option></select> Size <input type="number" id="pointSize" value="7" min="3" max="20" style="width:56px"></div>
+                <div class="settings-row"><b>Grid:</b> <select id="gridStyle"><option value="lines">Lines</option><option value="dots">Dots</option><option value="isometric">Isometric</option></select></div>
+                <div class="settings-row"><label><input type="checkbox" id="darkModeToggle"> Dark Mode</label></div>
+                <div class="settings-row"><label><input type="checkbox" id="showAlignment" checked> Alignment Guides</label></div>
+                <div class="settings-row"><label><input type="checkbox" id="showPerimArea"> Show Perimeter/Area</label></div>
+                <div class="settings-row"><label><input type="checkbox" id="showLabels" checked> Labels</label></div>
+                <div class="settings-row"><label><input type="checkbox" id="showDistances" checked> Distances</label></div>
+                <div class="settings-row"><label><input type="checkbox" id="showAngles" checked> Angles</label></div>
+                <div class="settings-row"><button class="btn danger" id="btnClearHistory">🗑️ Clear History</button></div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <span id="statusText">Polygon – Click to place points</span>
+            <span id="globalStats">Polygons:0 | Circles:0 | History:0</span>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" accept=".json" style="display:none" />
+
+    <script>
+        (function() {
+            // DOM refs
+            const canvas = document.getElementById('geomCanvas');
+            const ctx = canvas.getContext('2d');
+            const infoContent = document.getElementById('infoContent');
+            const statusText = document.getElementById('statusText');
+            const globalStats = document.getElementById('globalStats');
+            const settingsPanel = document.getElementById('settingsPanel');
+            const toast = document.getElementById('toast');
+            const fileInput = document.getElementById('fileInput');
+
+            // Data
+            let points = [];
+            let adjacency = new Map();
+            let currentPolyline = null;
+            let polygons = [];
+            let circles = [];
+            let ellipses = [];
+            let dimensions = [];
+            let annotations = [];
+            let letterCounter = 0;
+            const nextLetter = () => "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[letterCounter++ % 26];
+
+            // Tool state
+            let toolMode = 'polygon';
+            let circleStep = 0,
+                circleTemp = {};
+            let connectFirst = null;
+            let dimStep = 0,
+                dimP1 = null,
+                dimP2 = null;
+            let rectCorner = null;
+            let ngonCenter = null;
+            let ellipseStep = 0,
+                ellipseTemp = {};
+            let dragTarget = null,
+                hoveredPoint = null,
+                isDragging = false;
+            let mouseCanvasPos = { x: 0, y: 0 };
+
+            // Move tool state
+            let moveStartPos = null;
+            let moveStartPoints = null;
+            let isMoving = false;
+
+            // Display settings
+            let showLabels = true,
+                showDistances = true,
+                showAngles = true;
+            let snapGrid = false,
+                snapPoint = true,
+                snapLine = false,
+                snapMid = true,
+                snapInter = false,
+                snapTangent = false,
+                snapPerp = false;
+            let snapEllipseTang = false,
+                snapParallel = false,
+                snapExtend = false,
+                snapObj = false;
+            let darkMode = false;
+            let lineColor = '#3a3a3a',
+                lineWidthVal = 2.2,
+                lineDash = [];
+            let pointStyle = 'circle',
+                pointRadius = 7;
+            let gridStyle = 'lines';
+            let showAlignmentGuides = true,
+                showPerimeterArea = false;
+
+            const GRID = 40,
+                HIT_R = 15,
+                CLOSE_R = 20;
+            const MAX_HISTORY = 80;
+
+            // ── History ──
+            let history = [];
+            let historyIndex = -1;
+            let isRestoring = false;
+
+            function captureState() {
+                const adjObj = {};
+                for (let [k, v] of adjacency) adjObj[k] = [...v];
+                return {
+                    points: points.map(p => ({ ...p })),
+                    adjacency: adjObj,
+                    currentPolyline: currentPolyline ? [...currentPolyline] : null,
+                    polygons: polygons.map(p => ({ indices: [...p.indices] })),
+                    circles: circles.map(c => ({
+                        ...c,
+                        anchors: c.anchors ? c.anchors.map(a => ({ ...a })) : []
+                    })),
+                    ellipses: ellipses.map(e => ({ ...e })),
+                    dimensions: dimensions.map(d => ({ ...d })),
+                    annotations: annotations.map(a => ({ ...a })),
+                    letterCounter,
+                    circleStep,
+                    circleTemp: { ...circleTemp },
+                    connectFirst,
+                    dimStep,
+                    dimP1,
+                    dimP2,
+                    rectCorner: rectCorner ? { ...rectCorner } : null,
+                    ngonCenter: ngonCenter ? { ...ngonCenter } : null,
+                    ellipseStep,
+                    ellipseTemp: { ...ellipseTemp },
+                };
+            }
+
+            function restoreState(state) {
+                isRestoring = true;
+                points = state.points.map(p => ({ ...p }));
+                const adjObj = state.adjacency || {};
+                adjacency = new Map();
+                for (let k in adjObj) adjacency.set(parseInt(k), new Set(adjObj[k]));
+                currentPolyline = state.currentPolyline ? [...state.currentPolyline] : null;
+                polygons = state.polygons.map(p => ({ indices: [...p.indices] }));
+                circles = state.circles.map(c => ({
+                    ...c,
+                    anchors: c.anchors ? c.anchors.map(a => ({ ...a })) : []
+                }));
+                ellipses = state.ellipses.map(e => ({ ...e }));
+                dimensions = state.dimensions.map(d => ({ ...d }));
+                annotations = state.annotations.map(a => ({ ...a }));
+                letterCounter = state.letterCounter || 0;
+                circleStep = state.circleStep || 0;
+                circleTemp = { ...(state.circleTemp || {}) };
+                connectFirst = state.connectFirst !== undefined ? state.connectFirst : null;
+                dimStep = state.dimStep || 0;
+                dimP1 = state.dimP1 !== undefined ? state.dimP1 : null;
+                dimP2 = state.dimP2 !== undefined ? state.dimP2 : null;
+                rectCorner = state.rectCorner ? { ...state.rectCorner } : null;
+                ngonCenter = state.ngonCenter ? { ...state.ngonCenter } : null;
+                ellipseStep = state.ellipseStep || 0;
+                ellipseTemp = { ...(state.ellipseTemp || {}) };
+                isRestoring = false;
+                updateAllCircleAnchors();
+            }
+
+            function pushHistory() {
+                if (isRestoring) return;
+                if (historyIndex < history.length - 1) history = history.slice(0, historyIndex + 1);
+                const state = captureState();
+                history.push(state);
+                if (history.length > MAX_HISTORY) history.shift();
+                historyIndex = history.length - 1;
+                updateUndoButtons();
+                updateStatusBar();
+                autoSave();
+            }
+
+            function undo() {
+                if (historyIndex <= 0) return;
+                historyIndex--;
+                restoreState(history[historyIndex]);
+                render();
+                updateUndoButtons();
+                updateStatusBar();
+                showToast('↩️ Undo');
+            }
+
+            function redo() {
+                if (historyIndex >= history.length - 1) return;
+                historyIndex++;
+                restoreState(history[historyIndex]);
+                render();
+                updateUndoButtons();
+                updateStatusBar();
+                showToast('↪️ Redo');
+            }
+
+            function updateUndoButtons() {
+                document.getElementById('btnUndo').disabled = (historyIndex <= 0);
+                document.getElementById('btnRedo').disabled = (historyIndex >= history.length - 1);
+            }
+
+            function clearHistory() {
+                history = [];
+                historyIndex = -1;
+                pushHistory();
+                updateUndoButtons();
+                showToast('🗑️ History cleared');
+            }
+
+            function withHistory(fn) {
+                pushHistory();
+                fn();
+                render();
+                updateStatusBar();
+            }
+
+            // ── Circle anchor management ──
+            function updateAllCircleAnchors() {
+                for (let c of circles) {
+                    const center = points[c.centerIdx];
+                    const radPt = points[c.radiusIdx];
+                    if (!center || !radPt) continue;
+                    const r = dist(center, radPt);
+                    if (c.anchors) {
+                        for (let a of c.anchors) {
+                            const p = points[a.idx];
+                            if (p) {
+                                p.x = center.x + r * Math.cos(a.angle);
+                                p.y = center.y + r * Math.sin(a.angle);
+                            }
+                        }
+                    }
+                }
+            }
+
+            function addCircleAnchor(circleIdx, pointIdx, angle) {
+                const c = circles[circleIdx];
+                if (!c) return;
+                if (!c.anchors) c.anchors = [];
+                c.anchors.push({ idx: pointIdx, angle: angle });
+                const center = points[c.centerIdx];
+                const radPt = points[c.radiusIdx];
+                if (center && radPt) {
+                    const r = dist(center, radPt);
+                    const p = points[pointIdx];
+                    p.x = center.x + r * Math.cos(angle);
+                    p.y = center.y + r * Math.sin(angle);
+                }
+            }
+
+            function updateCircleAnchors(circleIdx) {
+                const c = circles[circleIdx];
+                if (!c) return;
+                const center = points[c.centerIdx];
+                const radPt = points[c.radiusIdx];
+                if (!center || !radPt) return;
+                const r = dist(center, radPt);
+                if (c.anchors) {
+                    for (let a of c.anchors) {
+                        const p = points[a.idx];
+                        if (p) {
+                            p.x = center.x + r * Math.cos(a.angle);
+                            p.y = center.y + r * Math.sin(a.angle);
+                        }
+                    }
+                }
+            }
+
+            // ── Helpers ──
+            const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+            const getPos = e => {
+                const r = canvas.getBoundingClientRect();
+                return { x: e.clientX - r.left, y: e.clientY - r.top };
+            };
+            const angleBetweenVectors = (vx1, vy1, vx2, vy2) => {
+                const dot = vx1 * vx2 + vy1 * vy2;
+                const m1 = Math.hypot(vx1, vy1),
+                    m2 = Math.hypot(vx2, vy2);
+                if (m1 < 0.001 || m2 < 0.001) return null;
+                return Math.acos(Math.max(-1, Math.min(1, dot / (m1 * m2))));
+            };
+
+            function lineIntersection(p1, p2, p3, p4) {
+                const d = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
+                if (Math.abs(d) < 1e-6) return null;
+                const t = ((p1.x - p3.x) * (p3.y - p4.y) - (p1.y - p3.y) * (p3.x - p4.x)) / d;
+                const u = -((p1.x - p2.x) * (p1.y - p3.y) - (p1.y - p2.y) * (p1.x - p3.x)) / d;
+                if (t >= 0 && t <= 1 && u >= 0 && u <= 1) return { x: p1.x + t * (p2.x - p1.x), y: p1.y + t * (p2.y - p1.y) };
+                return null;
+            }
+
+            function pointToSegmentDist(px, py, p1, p2) {
+                const dx = p2.x - p1.x,
+                    dy = p2.y - p1.y;
+                const len2 = dx * dx + dy * dy;
+                if (len2 === 0) return { dist: dist({ x: px, y: py }, p1), proj: { x: p1.x, y: p1.y }, t: 0 };
+                let t = ((px - p1.x) * dx + (py - p1.y) * dy) / len2;
+                t = Math.max(0, Math.min(1, t));
+                const proj = { x: p1.x + t * dx, y: p1.y + t * dy };
+                return { dist: dist({ x: px, y: py }, proj), proj, t };
+            }
+
+            // ── Snapping ──
+            function snapAll(pos) {
+                let best = pos,
+                    bestDist = Infinity;
+                const candidates = [];
+
+                if (snapGrid) {
+                    const g = { x: Math.round(pos.x / GRID) * GRID, y: Math.round(pos.y / GRID) * GRID };
+                    candidates.push({ ...g, dist: dist(pos, g) });
+                }
+                if (snapPoint) {
+                    for (let i = 0; i < points.length; i++) {
+                        const d = dist(pos, points[i]);
+                        if (d < HIT_R) candidates.push({ ...points[i], dist: d });
+                    }
+                }
+                if (snapLine) {
+                    const drawn = new Set();
+                    for (let [i, nbrs] of adjacency) {
+                        const p1 = points[i];
+                        if (!p1) continue;
+                        for (let j of nbrs) {
+                            const key = i < j ? `${i}-${j}` : `${j}-${i}`;
+                            if (drawn.has(key)) continue;
+                            drawn.add(key);
+                            const p2 = points[j];
+                            if (!p2) continue;
+                            const res = pointToSegmentDist(pos.x, pos.y, p1, p2);
+                            if (res.dist < 12) candidates.push({ ...res.proj, dist: res.dist });
+                        }
+                    }
+                    for (let c of circles) {
+                        const center = points[c.centerIdx],
+                            radPt = points[c.radiusIdx];
+                        if (center && radPt) addSegmentSnap(candidates, pos, center, radPt);
+                        if (c.endAngleIdx !== undefined && points[c.endAngleIdx]) {
+                            const endPt = points[c.endAngleIdx];
+                            if (center && endPt) addSegmentSnap(candidates, pos, center, endPt);
+                        }
+                        if (c.anchors) {
+                            for (let a of c.anchors) {
+                                const p = points[a.idx];
+                                if (p && center) addSegmentSnap(candidates, pos, center, p);
+                            }
+                        }
+                    }
+                }
+                if (snapMid) {
+                    const drawn = new Set();
+                    for (let [i, nbrs] of adjacency) {
+                        const p1 = points[i];
+                        if (!p1) continue;
+                        for (let j of nbrs) {
+                            const key = i < j ? `${i}-${j}` : `${j}-${i}`;
+                            if (drawn.has(key)) continue;
+                            drawn.add(key);
+                            const p2 = points[j];
+                            if (!p2) continue;
+                            const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+                            const d = dist(pos, mid);
+                            if (d < HIT_R) candidates.push({ ...mid, dist: d });
+                        }
+                    }
+                    for (let c of circles) {
+                        const center = points[c.centerIdx],
+                            radPt = points[c.radiusIdx];
+                        if (center && radPt) {
+                            const mid = { x: (center.x + radPt.x) / 2, y: (center.y + radPt.y) / 2 };
+                            const d = dist(pos, mid);
+                            if (d < HIT_R) candidates.push({ ...mid, dist: d });
+                        }
+                        if (c.endAngleIdx !== undefined) {
+                            const endPt = points[c.endAngleIdx];
+                            if (center && endPt) {
+                                const mid = { x: (center.x + endPt.x) / 2, y: (center.y + endPt.y) / 2 };
+                                const d = dist(pos, mid);
+                                if (d < HIT_R) candidates.push({ ...mid, dist: d });
+                            }
+                        }
+                        if (c.anchors) {
+                            for (let a of c.anchors) {
+                                const p = points[a.idx];
+                                if (p && center) {
+                                    const mid = { x: (center.x + p.x) / 2, y: (center.y + p.y) / 2 };
+                                    const d = dist(pos, mid);
+                                    if (d < HIT_R) candidates.push({ ...mid, dist: d });
+                                }
+                            }
+                        }
+                    }
+                }
+                if (snapInter) {
+                    const segs = [];
+                    const drawn = new Set();
+                    for (let [i, nbrs] of adjacency) {
+                        const p1 = points[i];
+                        if (!p1) continue;
+                        for (let j of nbrs) {
+                            const key = i < j ? `${i}-${j}` : `${j}-${i}`;
+                            if (drawn.has(key)) continue;
+                            drawn.add(key);
+                            segs.push({ p1: points[i], p2: points[j] });
+                        }
+                    }
+                    for (let c of circles) {
+                        const center = points[c.centerIdx],
+                            radPt = points[c.radiusIdx];
+                        if (center && radPt) segs.push({ p1: center, p2: radPt });
+                        if (c.endAngleIdx !== undefined) {
+                            const endPt = points[c.endAngleIdx];
+                            if (center && endPt) segs.push({ p1: center, p2: endPt });
+                        }
+                        if (c.anchors) {
+                            for (let a of c.anchors) {
+                                const p = points[a.idx];
+                                if (p && center) segs.push({ p1: center, p2: p });
+                            }
+                        }
+                    }
+                    for (let a = 0; a < segs.length; a++) {
+                        for (let b = a + 1; b < segs.length; b++) {
+                            const inter = lineIntersection(segs[a].p1, segs[a].p2, segs[b].p1, segs[b].p2);
+                            if (inter) { const d = dist(pos, inter); if (d < 18) candidates.push({ ...inter, dist: d }); }
+                        }
+                    }
+                }
+                if (snapTangent) {
+                    for (let c of circles) {
+                        const center = points[c.centerIdx],
+                            radPt = points[c.radiusIdx];
+                        if (!center || !radPt) continue;
+                        const r = dist(center, radPt);
+                        const d = dist(pos, center);
+                        if (d < r || d < 0.1) continue;
+                        const ang = Math.atan2(pos.y - center.y, pos.x - center.x);
+                        const alpha = Math.asin(Math.min(1, r / d));
+                        const t1 = ang + alpha,
+                            t2 = ang - alpha;
+                        const tan1 = { x: center.x + r * Math.cos(t1), y: center.y + r * Math.sin(t1) };
+                        const tan2 = { x: center.x + r * Math.cos(t2), y: center.y + r * Math.sin(t2) };
+                        const d1 = dist(pos, tan1),
+                            d2 = dist(pos, tan2);
+                        if (d1 < 20) candidates.push({ ...tan1, dist: d1 });
+                        if (d2 < 20) candidates.push({ ...tan2, dist: d2 });
+                    }
+                }
+                if (snapEllipseTang) {
+                    for (let e of ellipses) {
+                        const center = points[e.centerIdx],
+                            rxP = points[e.radXIdx],
+                            ryP = points[e.radYIdx];
+                        if (!center || !rxP || !ryP) continue;
+                        const rx = dist(center, rxP),
+                            ry = dist(center, ryP);
+                        if (rx < 0.1 || ry < 0.1) continue;
+                        const angle = Math.atan2(rxP.y - center.y, rxP.x - center.x);
+                        const dx = pos.x - center.x,
+                            dy = pos.y - center.y;
+                        const cosA = Math.cos(angle),
+                            sinA = Math.sin(angle);
+                        let bestDist = Infinity,
+                            bestPt = null;
+                        const steps = 36;
+                        for (let i = 0; i < steps; i++) {
+                            const theta = (i / steps) * 2 * Math.PI;
+                            const px = center.x + rx * Math.cos(theta) * cosA - ry * Math.sin(theta) * sinA;
+                            const py = center.y + rx * Math.cos(theta) * sinA + ry * Math.sin(theta) * cosA;
+                            const d = dist(pos, { x: px, y: py });
+                            if (d < bestDist) { bestDist = d;
+                                bestPt = { x: px, y: py }; }
+                        }
+                        if (bestPt && bestDist < 20) candidates.push({ ...bestPt, dist: bestDist });
+                    }
+                }
+                if (snapPerp) {
+                    const drawn = new Set();
+                    for (let [i, nbrs] of adjacency) {
+                        const p1 = points[i];
+                        if (!p1) continue;
+                        for (let j of nbrs) {
+                            const key = i < j ? `${i}-${j}` : `${j}-${i}`;
+                            if (drawn.has(key)) continue;
+                            drawn.add(key);
+                            const p2 = points[j];
+                            if (!p2) continue;
+                            const dx = p2.x - p1.x,
+                                dy = p2.y - p1.y;
+                            const len = Math.hypot(dx, dy);
+                            if (len < 0.01) continue;
+                            const nx = -dy / len,
+                                ny = dx / len;
+                            const t = (pos.x - p1.x) * nx + (pos.y - p1.y) * ny;
+                            const proj = { x: p1.x + t * nx, y: p1.y + t * ny };
+                            const d = dist(pos, proj);
+                            if (d < 14) candidates.push({ ...proj, dist: d });
+                        }
+                    }
+                }
+                if (snapParallel || snapExtend) {
+                    const drawn = new Set();
+                    for (let [i, nbrs] of adjacency) {
+                        const p1 = points[i];
+                        if (!p1) continue;
+                        for (let j of nbrs) {
+                            const key = i < j ? `${i}-${j}` : `${j}-${i}`;
+                            if (drawn.has(key)) continue;
+                            drawn.add(key);
+                            const p2 = points[j];
+                            if (!p2) continue;
+                            const dx = p2.x - p1.x,
+                                dy = p2.y - p1.y;
+                            const len = Math.hypot(dx, dy);
+                            if (len < 0.01) continue;
+                            const nx = -dy / len,
+                                ny = dx / len;
+                            if (snapParallel) {
+                                const t = ((pos.x - p1.x) * dx + (pos.y - p1.y) * dy) / (len * len);
+                                const proj = { x: p1.x + t * dx, y: p1.y + t * dy };
+                                const perpDist = (pos.x - p1.x) * nx + (pos.y - p1.y) * ny;
+                                const pProj = { x: proj.x + perpDist * nx, y: proj.y + perpDist * ny };
+                                const d = dist(pos, pProj);
+                                if (d < 16) candidates.push({ ...pProj, dist: d });
+                            }
+                            if (snapExtend) {
+                                const t = ((pos.x - p1.x) * dx + (pos.y - p1.y) * dy) / (len * len);
+                                const proj = { x: p1.x + t * dx, y: p1.y + t * dy };
+                                const d = dist(pos, proj);
+                                if (d < 12 && (t < -0.1 || t > 1.1)) candidates.push({ ...proj, dist: d });
+                            }
+                        }
+                    }
+                }
+                if (snapObj) {
+                    for (let c of circles) {
+                        const center = points[c.centerIdx],
+                            radPt = points[c.radiusIdx];
+                        if (!center || !radPt) continue;
+                        const r = dist(center, radPt);
+                        const dc = dist(pos, center);
+                        if (dc < HIT_R) candidates.push({ ...center, dist: dc });
+                        const qs = [
+                            { x: center.x + r, y: center.y },
+                            { x: center.x - r, y: center.y },
+                            { x: center.x, y: center.y + r },
+                            { x: center.x, y: center.y - r }
+                        ];
+                        for (let q of qs) { const d = dist(pos, q); if (d < HIT_R) candidates.push({ ...q, dist: d }); }
+                    }
+                    for (let e of ellipses) {
+                        const center = points[e.centerIdx];
+                        if (!center) continue;
+                        const dc = dist(pos, center);
+                        if (dc < HIT_R) candidates.push({ ...center, dist: dc });
+                    }
+                    for (let p of polygons) {
+                        if (p.indices.length < 3) continue;
+                        let cx = 0,
+                            cy = 0;
+                        for (let idx of p.indices) { cx += points[idx].x;
+                            cy += points[idx].y; }
+                        cx /= p.indices.length;
+                        cy /= p.indices.length;
+                        const dc = dist(pos, { x: cx, y: cy });
+                        if (dc < HIT_R) candidates.push({ x: cx, y: cy, dist: dc });
+                    }
+                }
+
+                for (let c of candidates) {
+                    if (c.dist < bestDist) { best = c;
+                        bestDist = c.dist; }
+                }
+                return best;
+            }
+
+            function addSegmentSnap(candidates, pos, p1, p2) {
+                const res = pointToSegmentDist(pos.x, pos.y, p1, p2);
+                if (res.dist < 12) candidates.push({ ...res.proj, dist: res.dist });
+            }
+
+            // ── Adjacency ──
+            function addConnection(i, j) {
+                if (i === j) return;
+                if (!adjacency.has(i)) adjacency.set(i, new Set());
+                if (!adjacency.has(j)) adjacency.set(j, new Set());
+                adjacency.get(i).add(j);
+                adjacency.get(j).add(i);
+            }
+
+            function removeConnection(i, j) {
+                adjacency.get(i)?.delete(j);
+                adjacency.get(j)?.delete(i);
+            }
+
+            function removeAllConnections(i) {
+                for (let n of getNeighbors(i)) adjacency.get(n)?.delete(i);
+                adjacency.delete(i);
+            }
+            const getNeighbors = i => adjacency.has(i) ? [...adjacency.get(i)] : [];
+
+            // ── Points ──
+            function addPoint(x, y, connectToPrev = false) {
+                const snapped = snapAll({ x, y });
+                const idx = points.length;
+                points.push({ x: snapped.x, y: snapped.y, letter: nextLetter() });
+                if (connectToPrev && currentPolyline && currentPolyline.length > 0) {
+                    addConnection(idx, currentPolyline[currentPolyline.length - 1]);
+                }
+                if (!currentPolyline) currentPolyline = [];
+                currentPolyline.push(idx);
+                return idx;
+            }
+
+            function deletePoint(idx) {
+                if (idx === undefined || idx >= points.length) return;
+                for (let c of circles) {
+                    if (c.anchors) {
+                        c.anchors = c.anchors.filter(a => a.idx !== idx);
+                    }
+                }
+                removeAllConnections(idx);
+                if (currentPolyline) {
+                    currentPolyline = currentPolyline.filter(i => i !== idx);
+                    if (currentPolyline.length === 0) currentPolyline = null;
+                }
+                for (let i = circles.length - 1; i >= 0; i--) {
+                    if (circles[i].centerIdx === idx || circles[i].radiusIdx === idx || circles[i].endAngleIdx === idx)
+                        circles.splice(i, 1);
+                }
+                for (let i = ellipses.length - 1; i >= 0; i--) {
+                    if (ellipses[i].centerIdx === idx || ellipses[i].radXIdx === idx || ellipses[i].radYIdx === idx)
+                        ellipses.splice(i, 1);
+                }
+                for (let i = dimensions.length - 1; i >= 0; i--) {
+                    if (dimensions[i].p1Idx === idx || dimensions[i].p2Idx === idx) dimensions.splice(i, 1);
+                }
+                points.splice(idx, 1);
+                const upd = o => o > idx ? o - 1 : o;
+                const newAdj = new Map();
+                for (let [i, nbrs] of adjacency) {
+                    const ni = upd(i);
+                    if (ni === idx) continue;
+                    const s = new Set();
+                    for (let n of nbrs) { const nn = upd(n); if (nn !== idx) s.add(nn); }
+                    if (s.size) newAdj.set(ni, s);
+                }
+                adjacency.clear();
+                for (let [k, v] of newAdj) adjacency.set(k, v);
+                if (currentPolyline) {
+                    currentPolyline = currentPolyline.map(upd).filter(i => i >= 0);
+                    if (!currentPolyline.length) currentPolyline = null;
+                }
+                circles.forEach(c => {
+                    c.centerIdx = upd(c.centerIdx);
+                    c.radiusIdx = upd(c.radiusIdx);
+                    if (c.endAngleIdx !== undefined) c.endAngleIdx = upd(c.endAngleIdx);
+                    if (c.anchors) {
+                        c.anchors = c.anchors.map(a => ({ idx: upd(a.idx), angle: a.angle })).filter(a => a.idx >= 0);
+                    }
+                });
+                ellipses.forEach(e => { e.centerIdx = upd(e.centerIdx);
+                    e.radXIdx = upd(e.radXIdx);
+                    e.radYIdx = upd(e.radYIdx); });
+                dimensions.forEach(d => { d.p1Idx = upd(d.p1Idx);
+                    d.p2Idx = upd(d.p2Idx); });
+                polygons.forEach(p => p.indices = p.indices.map(upd).filter(i => i >= 0));
+            }
+
+            function undoLastPoint() { if (points.length) deletePoint(points.length - 1); }
+
+            function clearAll() {
+                points.length = 0;
+                adjacency.clear();
+                currentPolyline = null;
+                polygons.length = 0;
+                circles.length = 0;
+                ellipses.length = 0;
+                dimensions.length = 0;
+                annotations.length = 0;
+                circleStep = 0;
+                circleTemp = {};
+                connectFirst = null;
+                dimStep = 0;
+                dimP1 = null;
+                dimP2 = null;
+                rectCorner = null;
+                ngonCenter = null;
+                ellipseStep = 0;
+                ellipseTemp = {};
+                letterCounter = 0;
+            }
+
+            function closeCurrentPolyline() {
+                if (!currentPolyline || currentPolyline.length < 3) return;
+                addConnection(currentPolyline[0], currentPolyline[currentPolyline.length - 1]);
+                polygons.push({ indices: [...currentPolyline] });
+                currentPolyline = null;
+            }
+
+            // ── Split ──
+            function findClosestSegment(px, py) {
+                let best = null;
+                const drawn = new Set();
+                for (let [i, nbrs] of adjacency) {
+                    const p1 = points[i];
+                    if (!p1) continue;
+                    for (let j of nbrs) {
+                        const key = i < j ? `${i}-${j}` : `${j}-${i}`;
+                        if (drawn.has(key)) continue;
+                        drawn.add(key);
+                        const p2 = points[j];
+                        if (!p2) continue;
+                        const res = pointToSegmentDist(px, py, p1, p2);
+                        if (res.dist <= 12 && (!best || res.dist < best.dist)) {
+                            best = { i, j, proj: res.proj, dist: res.dist };
+                        }
+                    }
+                }
+                return best;
+            }
+
+            function splitSegment(seg) {
+                removeConnection(seg.i, seg.j);
+                const snapped = snapAll(seg.proj);
+                const newIdx = points.length;
+                points.push({ x: snapped.x, y: snapped.y, letter: nextLetter() });
+                addConnection(newIdx, seg.i);
+                addConnection(newIdx, seg.j);
+                if (currentPolyline) {
+                    for (let k = 0; k < currentPolyline.length; k++) {
+                        const a = currentPolyline[k],
+                            b = currentPolyline[(k + 1) % currentPolyline.length];
+                        if ((a === seg.i && b === seg.j) || (a === seg.j && b === seg.i)) {
+                            currentPolyline.splice(k + 1, 0, newIdx);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // ── Circle split (circumference) ──
+            function findClosestCircle(px, py) {
+                let best = null;
+                const threshold = 14;
+                for (let ci = 0; ci < circles.length; ci++) {
+                    const c = circles[ci];
+                    const center = points[c.centerIdx],
+                        radPt = points[c.radiusIdx];
+                    if (!center || !radPt) continue;
+                    const r = dist(center, radPt);
+                    const d = dist({ x: px, y: py }, center);
+                    const diff = Math.abs(d - r);
+                    if (diff < threshold && (!best || diff < best.diff)) {
+                        let onArc = true;
+                        if (c.endAngleIdx !== undefined) {
+                            const endPt = points[c.endAngleIdx];
+                            if (endPt) {
+                                const startAng = Math.atan2(radPt.y - center.y, radPt.x - center.x);
+                                const endAng = Math.atan2(endPt.y - center.y, endPt.x - center.x);
+                                let ang = Math.atan2(py - center.y, px - center.x);
+                                let delta = endAng - startAng;
+                                if (delta < 0) delta += 2 * Math.PI;
+                                let a = ang - startAng;
+                                if (a < 0) a += 2 * Math.PI;
+                                onArc = a <= delta || Math.abs(a - delta) < 0.01 || Math.abs(a) < 0.01;
+                            }
+                        }
+                        if (onArc) {
+                            const angle = Math.atan2(py - center.y, px - center.x);
+                            const proj = { x: center.x + r * Math.cos(angle), y: center.y + r * Math.sin(angle) };
+                            best = { circleIdx: ci, circle: c, proj, diff, angle };
+                        }
+                    }
+                }
+                return best;
+            }
+
+            function splitCircleAtPoint(circleIdx, proj, angle) {
+                const c = circles[circleIdx];
+                if (!c) return;
+                const snapped = snapAll(proj);
+                const newIdx = points.length;
+                points.push({ x: snapped.x, y: snapped.y, letter: nextLetter() });
+                addConnection(newIdx, c.centerIdx);
+                addCircleAnchor(circleIdx, newIdx, angle);
+                if (c.endAngleIdx !== undefined) {
+                    const endPt = points[c.endAngleIdx];
+                    const center = points[c.centerIdx];
+                    const radPt = points[c.radiusIdx];
+                    if (center && radPt && endPt) {
+                        const newCircle = {
+                            centerIdx: c.centerIdx,
+                            radiusIdx: c.radiusIdx,
+                            endAngleIdx: newIdx,
+                            anchors: []
+                        };
+                        c.endAngleIdx = newIdx;
+                        circles.push(newCircle);
+                        addConnection(newIdx, c.centerIdx);
+                    }
+                }
+                updateCircleAnchors(circleIdx);
+            }
+
+            // ── Shapes ──
+            function createRectangle(p1, p2) {
+                const corners = [p1, { x: p2.x, y: p1.y }, p2, { x: p1.x, y: p2.y }];
+                const indices = corners.map(c => addPoint(c.x, c.y, false));
+                for (let i = 0; i < 4; i++) addConnection(indices[i], indices[(i + 1) % 4]);
+                polygons.push({ indices });
+            }
+
+            function createRegularPolygon(center, radiusPt, sides) {
+                const r = dist(center, radiusPt);
+                const startAngle = Math.atan2(radiusPt.y - center.y, radiusPt.x - center.x);
+                const indices = [];
+                for (let i = 0; i < sides; i++) {
+                    const ang = startAngle + (2 * Math.PI * i) / sides;
+                    indices.push(addPoint(center.x + Math.cos(ang) * r, center.y + Math.sin(ang) * r, false));
+                }
+                for (let i = 0; i < sides; i++) addConnection(indices[i], indices[(i + 1) % sides]);
+                polygons.push({ indices });
+            }
+
+            function createEllipse(centerIdx, radXIdx, radYIdx) {
+                ellipses.push({ centerIdx, radXIdx, radYIdx });
+            }
+
+            function finalizeFullCircle(centerIdx, radiusIdx) {
+                const c = { centerIdx, radiusIdx, anchors: [] };
+                circles.push(c);
+                addConnection(centerIdx, radiusIdx);
+            }
+
+            function finalizeArc(centerIdx, radiusIdx, endIdx) {
+                const c = { centerIdx, radiusIdx, endAngleIdx: endIdx, anchors: [] };
+                circles.push(c);
+                addConnection(centerIdx, radiusIdx);
+                addConnection(centerIdx, endIdx);
+            }
+
+            // ── Move tool ──
+            function moveAllGeometry(dx, dy) {
+                if (dx === 0 && dy === 0) return;
+                for (let p of points) {
+                    p.x += dx;
+                    p.y += dy;
+                }
+                for (let a of annotations) {
+                    a.x += dx;
+                    a.y += dy;
+                }
+                for (let d of dimensions) {
+                    if (d.offsetPoint) {
+                        d.offsetPoint.x += dx;
+                        d.offsetPoint.y += dy;
+                    }
+                }
+            }
+
+            // ── Resize ──
+            function resizeCanvas() {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                canvas.style.width = rect.width + 'px';
+                canvas.style.height = rect.height + 'px';
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.scale(dpr, dpr);
+            }
+            window.addEventListener('resize', () => { resizeCanvas();
+                render(); });
+
+            // ── Render ──
+            function render() {
+                const w = canvas.width / (Math.min(window.devicePixelRatio || 1, 2));
+                const h = canvas.height / (Math.min(window.devicePixelRatio || 1, 2));
+                ctx.clearRect(0, 0, w, h);
+                drawGrid(w, h);
+                drawAllEdges();
+                drawEllipses();
+                drawCircles();
+                if (showDistances) drawDistanceLabels();
+                if (showAngles) drawAllAngles();
+                drawDimensions();
+                drawAnnotations();
+                if (showPerimeterArea) drawPerimeterAreaLabels();
+                drawPoints();
+                if (toolMode === 'circle' && circleStep === 1) drawCircleRadiusPreview();
+                if (toolMode === 'dimension' && dimStep === 2) drawDimPreview();
+                if (toolMode === 'split') highlightNearestSegment();
+                if (showAlignmentGuides && hoveredPoint !== null) drawAlignmentGuides();
+                updateInfoPanel();
+                updateStatusBar();
+            }
+
+            // ── Drawing helpers ──
+            function drawGrid(w, h) {
+                ctx.strokeStyle = darkMode ? '#444' : '#eae6df';
+                ctx.lineWidth = 0.6;
+                if (gridStyle === 'lines') {
+                    for (let x = GRID; x < w; x += GRID) { ctx.beginPath();
+                        ctx.moveTo(x, 0);
+                        ctx.lineTo(x, h);
+                        ctx.stroke(); }
+                    for (let y = GRID; y < h; y += GRID) { ctx.beginPath();
+                        ctx.moveTo(0, y);
+                        ctx.lineTo(w, y);
+                        ctx.stroke(); }
+                } else if (gridStyle === 'dots') {
+                    ctx.fillStyle = darkMode ? '#555' : '#ccc';
+                    for (let x = GRID; x < w; x += GRID)
+                        for (let y = GRID; y < h; y += GRID) { ctx.beginPath();
+                            ctx.arc(x, y, 1.5, 0, 2 * Math.PI);
+                            ctx.fill(); }
+                } else if (gridStyle === 'isometric') {
+                    ctx.strokeStyle = darkMode ? '#555' : '#ddd';
+                    ctx.lineWidth = 0.5;
+                    for (let i = -h; i < w + h; i += GRID) {
+                        ctx.beginPath();
+                        ctx.moveTo(i, 0);
+                        ctx.lineTo(i + h, h);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(i, 0);
+                        ctx.lineTo(i - h, h);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            function drawAllEdges() {
+                const drawn = new Set();
+                for (let [i, nbrs] of adjacency) {
+                    const p1 = points[i];
+                    if (!p1) continue;
+                    for (let j of nbrs) {
+                        const key = i < j ? `${i}-${j}` : `${j}-${i}`;
+                        if (drawn.has(key)) continue;
+                        drawn.add(key);
+                        const p2 = points[j];
+                        if (!p2) continue;
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = lineColor;
+                        ctx.lineWidth = lineWidthVal;
+                        ctx.setLineDash(lineDash);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+                }
+            }
+
+            function drawCircles() {
+                for (let c of circles) {
+                    const center = points[c.centerIdx],
+                        radPt = points[c.radiusIdx];
+                    if (!center || !radPt) continue;
+                    const r = dist(center, radPt);
+                    const startAngle = Math.atan2(radPt.y - center.y, radPt.x - center.x);
+                    let endAngle = startAngle + 2 * Math.PI;
+                    let hasArc = (c.endAngleIdx !== undefined && points[c.endAngleIdx]);
+                    if (hasArc) {
+                        const endPt = points[c.endAngleIdx];
+                        endAngle = Math.atan2(endPt.y - center.y, endPt.x - center.x);
+                        let delta = endAngle - startAngle;
+                        if (delta < 0) delta += 2 * Math.PI;
+                        endAngle = startAngle + delta;
+                    }
+                    ctx.beginPath();
+                    ctx.arc(center.x, center.y, r, 0, 2 * Math.PI);
+                    ctx.strokeStyle = '#8b6fc0';
+                    ctx.lineWidth = 2.2;
+                    ctx.setLineDash(hasArc ? [6, 4] : []);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    if (c.anchors) {
+                        for (let a of c.anchors) {
+                            const p = points[a.idx];
+                            if (p) {
+                                ctx.beginPath();
+                                ctx.moveTo(center.x, center.y);
+                                ctx.lineTo(p.x, p.y);
+                                ctx.strokeStyle = '#8b6fc0';
+                                ctx.lineWidth = 1.2;
+                                ctx.setLineDash([3, 3]);
+                                ctx.stroke();
+                                ctx.setLineDash([]);
+                            }
+                        }
+                    }
+                    ctx.beginPath();
+                    ctx.moveTo(center.x, center.y);
+                    ctx.lineTo(radPt.x, radPt.y);
+                    ctx.strokeStyle = '#8b6fc0';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    if (hasArc) {
+                        const endPt = points[c.endAngleIdx];
+                        ctx.beginPath();
+                        ctx.moveTo(center.x, center.y);
+                        ctx.lineTo(endPt.x, endPt.y);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(radPt.x, radPt.y);
+                        ctx.lineTo(endPt.x, endPt.y);
+                        ctx.strokeStyle = '#b39ddb';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([4, 3]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        ctx.beginPath();
+                        ctx.moveTo(center.x, center.y);
+                        ctx.arc(center.x, center.y, r, startAngle, endAngle);
+                        ctx.closePath();
+                        ctx.fillStyle = 'rgba(139,111,192,0.08)';
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(center.x, center.y, r, startAngle, endAngle);
+                        ctx.strokeStyle = '#8b6fc0';
+                        ctx.lineWidth = 2.8;
+                        ctx.setLineDash([]);
+                        ctx.stroke();
+                    }
+                    const midRad = startAngle;
+                    drawBadge(center.x + Math.cos(midRad) * r * 0.5, center.y + Math.sin(midRad) * r * 0.5, `r=${r.toFixed(1)}`,
+                        '#8b6fc0');
+                }
+            }
+
+            function drawEllipses() {
+                for (let e of ellipses) {
+                    const c = points[e.centerIdx],
+                        rxP = points[e.radXIdx],
+                        ryP = points[e.radYIdx];
+                    if (!c || !rxP || !ryP) continue;
+                    const rx = dist(c, rxP),
+                        ry = dist(c, ryP);
+                    const angle = Math.atan2(rxP.y - c.y, rxP.x - c.x);
+                    ctx.save();
+                    ctx.translate(c.x, c.y);
+                    ctx.rotate(angle);
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#8b6fc0';
+                    ctx.lineWidth = 2.2;
+                    ctx.setLineDash([6, 4]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.restore();
+                }
+            }
+
+            function drawDistanceLabels() {
+                const drawn = new Set();
+                for (let [i, nbrs] of adjacency) {
+                    const p1 = points[i];
+                    if (!p1) continue;
+                    for (let j of nbrs) {
+                        const key = i < j ? `${i}-${j}` : `${j}-${i}`;
+                        if (drawn.has(key)) continue;
+                        drawn.add(key);
+                        const p2 = points[j];
+                        if (!p2) continue;
+                        drawBadge((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, dist(p1, p2).toFixed(1), '#5c5c5c');
+                    }
+                }
+            }
+
+            function drawAllAngles() {
+                for (let [i, nbrs] of adjacency) {
+                    const vertex = points[i];
+                    if (!vertex) continue;
+                    const nbrArr = [...nbrs].filter(j => points[j]);
+                    if (nbrArr.length < 2) continue;
+                    nbrArr.sort((a, b) => Math.atan2(points[a].y - vertex.y, points[a].x - vertex.x) - Math.atan2(points[b]
+                        .y - vertex.y, points[b].x - vertex.x));
+                    for (let k = 0; k < nbrArr.length; k++) {
+                        const j1 = nbrArr[k],
+                            j2 = nbrArr[(k + 1) % nbrArr.length];
+                        const p1 = points[j1],
+                            p2 = points[j2];
+                        const ang = angleBetweenVectors(p1.x - vertex.x, p1.y - vertex.y, p2.x - vertex.x, p2.y - vertex.y);
+                        if (!ang || ang * 180 / Math.PI < 1 || ang * 180 / Math.PI > 179) continue;
+                        const a1 = Math.atan2(p1.y - vertex.y, p1.x - vertex.x),
+                            a2 = Math.atan2(p2.y - vertex.y, p2.x - vertex.x);
+                        let mid = a1 + (a2 - a1) / 2;
+                        if (Math.abs(a2 - a1) > Math.PI) mid += Math.PI;
+                        const radius = 28 + k * 14;
+                        ctx.beginPath();
+                        ctx.arc(vertex.x, vertex.y, radius, a1, a2, a2 < a1);
+                        const deg = Math.round(ang * 180 / Math.PI);
+                        const color = deg < 90 ? '#5a9e6f' : (deg > 90 ? '#e89440' : '#4a90d9');
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                        drawBadge(vertex.x + Math.cos(mid) * (radius + 14), vertex.y + Math.sin(mid) * (radius + 14), deg +
+                            '°', color);
+                    }
+                }
+            }
+
+            function drawDimensions() {
+                for (let d of dimensions) {
+                    const p1 = points[d.p1Idx],
+                        p2 = points[d.p2Idx];
+                    if (!p1 || !p2) continue;
+                    const off = d.offsetPoint;
+                    const dx = p2.x - p1.x,
+                        dy = p2.y - p1.y;
+                    const len = Math.hypot(dx, dy);
+                    const nx = -dy / len,
+                        ny = dx / len;
+                    const mx = (p1.x + p2.x) / 2,
+                        my = (p1.y + p2.y) / 2;
+                    const vec = { x: off.x - mx, y: off.y - my };
+                    const sign = (vec.x * nx + vec.y * ny) > 0 ? 1 : -1;
+                    const offsetDist = Math.abs(vec.x * nx + vec.y * ny);
+                    const ext1 = { x: p1.x + nx * sign * offsetDist, y: p1.y + ny * sign * offsetDist };
+                    const ext2 = { x: p2.x + nx * sign * offsetDist, y: p2.y + ny * sign * offsetDist };
+                    ctx.beginPath();
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(ext1.x, ext1.y);
+                    ctx.strokeStyle = '#666';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(p2.x, p2.y);
+                    ctx.lineTo(ext2.x, ext2.y);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(ext1.x, ext1.y);
+                    ctx.lineTo(ext2.x, ext2.y);
+                    ctx.strokeStyle = '#666';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    drawArrow(ext2, ext1, 8);
+                    drawArrow(ext1, ext2, 8);
+                    drawBadge((ext1.x + ext2.x) / 2, (ext1.y + ext2.y) / 2, len.toFixed(1), '#333');
+                }
+            }
+
+            function drawArrow(from, to, size) {
+                const angle = Math.atan2(from.y - to.y, from.x - to.x);
+                const x1 = from.x - Math.cos(angle) * size,
+                    y1 = from.y - Math.sin(angle) * size;
+                ctx.beginPath();
+                ctx.moveTo(from.x, from.y);
+                ctx.lineTo(x1 - Math.sin(angle) * size / 2, y1 + Math.cos(angle) * size / 2);
+                ctx.lineTo(x1 + Math.sin(angle) * size / 2, y1 - Math.cos(angle) * size / 2);
+                ctx.closePath();
+                ctx.fillStyle = '#666';
+                ctx.fill();
+            }
+
+            function drawAnnotations() {
+                for (let a of annotations) {
+                    ctx.font = 'italic 13px "Inter"';
+                    ctx.fillStyle = darkMode ? '#fff' : '#2c2c2c';
+                    ctx.fillText(a.text, a.x, a.y);
+                }
+            }
+
+            function drawPerimeterAreaLabels() {
+                for (let p of polygons) {
+                    if (p.indices.length < 3) continue;
+                    const perim = polygonPerimeter(p.indices);
+                    const area = polygonArea(p.indices);
+                    let cx = 0,
+                        cy = 0;
+                    for (let i of p.indices) { cx += points[i].x;
+                        cy += points[i].y; }
+                    cx /= p.indices.length;
+                    cy /= p.indices.length;
+                    ctx.font = 'bold 11px "Inter"';
+                    ctx.fillStyle = '#333';
+                    ctx.fillText(`P=${perim.toFixed(1)}`, cx, cy - 10);
+                    ctx.fillText(`A=${area.toFixed(1)}`, cx, cy + 10);
+                }
+            }
+
+            function drawPoints() {
+                for (let i = 0; i < points.length; i++) {
+                    const p = points[i];
+                    const isHover = hoveredPoint === i,
+                        isDrag = dragTarget === i;
+                    const rad = isDrag ? pointRadius + 3 : (isHover ? pointRadius + 2 : pointRadius);
+                    if (isDrag || isHover) {
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, rad + 6, 0, 2 * Math.PI);
+                        ctx.fillStyle = isDrag ? 'rgba(224,123,76,0.25)' : 'rgba(74,144,217,0.2)';
+                        ctx.fill();
+                    }
+                    if (pointStyle === 'circle') {
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, rad, 0, 2 * Math.PI);
+                        const grad = ctx.createRadialGradient(p.x - 1, p.y - 2, rad * 0.2, p.x, p.y, rad);
+                        if (isDrag) { grad.addColorStop(0, '#fff');
+                            grad.addColorStop(1, '#e07b4c'); } else if (isHover) { grad.addColorStop(0, '#fff');
+                            grad.addColorStop(1, '#4a90d9'); } else { grad.addColorStop(0, '#fff');
+                            grad.addColorStop(1, '#4a4a4a'); }
+                        ctx.fillStyle = grad;
+                        ctx.fill();
+                        ctx.strokeStyle = isDrag ? '#c96a3f' : (isHover ? '#3a70b0' : '#2a2a2a');
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    } else if (pointStyle === 'square') {
+                        ctx.fillStyle = isDrag ? '#e07b4c' : (isHover ? '#4a90d9' : '#4a4a4a');
+                        ctx.fillRect(p.x - rad, p.y - rad, rad * 2, rad * 2);
+                    } else if (pointStyle === 'cross') {
+                        ctx.strokeStyle = isDrag ? '#e07b4c' : (isHover ? '#4a90d9' : '#4a4a4a');
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(p.x - rad, p.y);
+                        ctx.lineTo(p.x + rad, p.y);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y - rad);
+                        ctx.lineTo(p.x, p.y + rad);
+                        ctx.stroke();
+                    }
+                    if (showLabels) {
+                        ctx.font = 'bold 11px "Inter"';
+                        ctx.fillStyle = darkMode ? '#fff' : '#2c2c2c';
+                        ctx.fillText(p.letter, p.x + 14, p.y - 14);
+                    }
+                }
+            }
+
+            function drawBadge(x, y, text, color) {
+                ctx.font = '600 12px "Inter"';
+                const m = ctx.measureText(text);
+                const pw = m.width + 10,
+                    ph = 18;
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.roundRect(x - pw / 2, y - ph / 2, pw, ph, 6);
+                ctx.fill();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.fillStyle = color;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(text, x, y);
+            }
+
+            function drawCircleRadiusPreview() {
+                if (circleTemp.centerIdx === undefined) return;
+                const center = points[circleTemp.centerIdx];
+                if (!center) return;
+                ctx.beginPath();
+                ctx.moveTo(center.x, center.y);
+                ctx.lineTo(mouseCanvasPos.x, mouseCanvasPos.y);
+                ctx.strokeStyle = '#8b6fc0';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 3]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            function drawDimPreview() {
+                if (dimP1 === null || dimP2 === null) return;
+                const p1 = points[dimP1],
+                    p2 = points[dimP2];
+                if (!p1 || !p2) return;
+                const off = mouseCanvasPos;
+                const dx = p2.x - p1.x,
+                    dy = p2.y - p1.y;
+                const len = Math.hypot(dx, dy);
+                const nx = -dy / len,
+                    ny = dx / len;
+                const mx = (p1.x + p2.x) / 2,
+                    my = (p1.y + p2.y) / 2;
+                const vec = { x: off.x - mx, y: off.y - my };
+                const sign = (vec.x * nx + vec.y * ny) > 0 ? 1 : -1;
+                const offsetDist = Math.abs(vec.x * nx + vec.y * ny);
+                const ext1 = { x: p1.x + nx * sign * offsetDist, y: p1.y + ny * sign * offsetDist };
+                const ext2 = { x: p2.x + nx * sign * offsetDist, y: p2.y + ny * sign * offsetDist };
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(ext1.x, ext1.y);
+                ctx.strokeStyle = '#aaa';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([3, 3]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.beginPath();
+                ctx.moveTo(p2.x, p2.y);
+                ctx.lineTo(ext2.x, ext2.y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(ext1.x, ext1.y);
+                ctx.lineTo(ext2.x, ext2.y);
+                ctx.strokeStyle = '#aaa';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+
+            function highlightNearestSegment() {
+                const seg = findClosestSegment(mouseCanvasPos.x, mouseCanvasPos.y);
+                if (seg) {
+                    ctx.beginPath();
+                    ctx.moveTo(points[seg.i].x, points[seg.i].y);
+                    ctx.lineTo(points[seg.j].x, points[seg.j].y);
+                    ctx.strokeStyle = '#e07b4c';
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                    return;
+                }
+                const circ = findClosestCircle(mouseCanvasPos.x, mouseCanvasPos.y);
+                if (circ) {
+                    const center = points[circ.circle.centerIdx];
+                    const radPt = points[circ.circle.radiusIdx];
+                    if (center && radPt) {
+                        const r = dist(center, radPt);
+                        ctx.beginPath();
+                        ctx.arc(center.x, center.y, r, 0, 2 * Math.PI);
+                        ctx.strokeStyle = '#e07b4c';
+                        ctx.lineWidth = 4;
+                        ctx.setLineDash([4, 4]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        ctx.beginPath();
+                        ctx.arc(circ.proj.x, circ.proj.y, 5, 0, 2 * Math.PI);
+                        ctx.fillStyle = '#e07b4c';
+                        ctx.fill();
+                    }
+                }
+            }
+
+            function drawAlignmentGuides() {
+                if (hoveredPoint === null) return;
+                const hp = points[hoveredPoint];
+                ctx.strokeStyle = '#ff8800';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 4]);
+                for (let i = 0; i < points.length; i++) {
+                    if (i === hoveredPoint) continue;
+                    const p = points[i];
+                    if (Math.abs(p.x - hp.x) < 2) { ctx.beginPath();
+                        ctx.moveTo(p.x, Math.min(p.y, hp.y) - 10);
+                        ctx.lineTo(p.x, Math.max(p.y, hp.y) + 10);
+                        ctx.stroke(); }
+                    if (Math.abs(p.y - hp.y) < 2) { ctx.beginPath();
+                        ctx.moveTo(Math.min(p.x, hp.x) - 10, p.y);
+                        ctx.lineTo(Math.max(p.x, hp.x) + 10, p.y);
+                        ctx.stroke(); }
+                }
+                ctx.setLineDash([]);
+            }
+
+            // ── Info ──
+            function updateInfoPanel() {
+                let html = '';
+                if (polygons.length) {
+                    const last = polygons[polygons.length - 1];
+                    if (last.indices.length > 2) {
+                        html += '<div class="info-title">📐 Polygon</div>';
+                        html +=
+                            `<div class="info-row"><span>Sides</span><span>${last.indices.length}</span></div>`;
+                        html +=
+                            `<div class="info-row"><span>Perimeter</span><span>${polygonPerimeter(last.indices).toFixed(1)}</span></div>`;
+                        html +=
+                            `<div class="info-row"><span>Area</span><span>${polygonArea(last.indices).toFixed(1)}</span></div>`;
+                    }
+                }
+                if (circles.length) {
+                    const c = circles[circles.length - 1];
+                    const center = points[c.centerIdx],
+                        radPt = points[c.radiusIdx];
+                    if (center && radPt) {
+                        const r = dist(center, radPt);
+                        html += '<div class="info-title">⭕ Circle</div>';
+                        html += `<div class="info-row"><span>Radius</span><span>${r.toFixed(1)}</span></div>`;
+                        html += `<div class="info-row"><span>Diameter</span><span>${(2*r).toFixed(1)}</span></div>`;
+                        html +=
+                            `<div class="info-row"><span>Circumference</span><span>${(2*Math.PI*r).toFixed(1)}</span></div>`;
+                        html += `<div class="info-row"><span>Area</span><span>${(Math.PI*r*r).toFixed(1)}</span></div>`;
+                        if (c.endAngleIdx !== undefined && points[c.endAngleIdx]) {
+                            const endPt = points[c.endAngleIdx];
+                            const startAng = Math.atan2(radPt.y - center.y, radPt.x - center.x);
+                            const endAng = Math.atan2(endPt.y - center.y, endPt.x - center.x);
+                            let delta = endAng - startAng;
+                            if (delta < 0) delta += 2 * Math.PI;
+                            html +=
+                                `<div class="info-row"><span>Central ∠</span><span>${(delta*180/Math.PI).toFixed(1)}°</span></div>`;
+                            html += `<div class="info-row"><span>Arc Len</span><span>${(r*delta).toFixed(1)}</span></div>`;
+                            html +=
+                                `<div class="info-row"><span>Chord</span><span>${Math.sqrt(2*r*r*(1-Math.cos(delta))).toFixed(1)}</span></div>`;
+                            html +=
+                                `<div class="info-row"><span>Sector Area</span><span>${(0.5*r*r*delta).toFixed(1)}</span></div>`;
+                        }
+                        if (c.anchors && c.anchors.length > 0) {
+                            html +=
+                                `<div class="info-row"><span>Anchors</span><span>${c.anchors.length}</span></div>`;
+                        }
+                    }
+                }
+                if (!html) html = 'Draw shapes.';
+                infoContent.innerHTML = html;
+            }
+
+            function updateStatusBar() {
+                const histCount = history.length;
+                globalStats.textContent =
+                    `Polygons:${polygons.length} | Circles:${circles.length} | History:${histCount}`;
+                let modeText = toolMode;
+                if (toolMode === 'circle') {
+                    if (circleStep === 0) modeText = 'Circle – Click center';
+                    else if (circleStep === 1) modeText = 'Circle – Click radius point (or Esc/DblClick for full)';
+                    else if (circleStep === 2) modeText = 'Circle – Click arc end (Esc/DblClick for full)';
+                } else if (toolMode === 'ngon') modeText = ngonCenter ? 'Click radius' : 'Click center';
+                else if (toolMode === 'rect') modeText = rectCorner ? 'Click second corner' : 'Click first corner';
+                else if (toolMode === 'ellipse') modeText = ellipseStep === 0 ? 'Click center' : (ellipseStep === 1 ?
+                    'Click X radius' : 'Click Y radius');
+                else if (toolMode === 'dimension') modeText = dimStep === 0 ? 'Select start' : (dimStep === 1 ?
+                    'Select end' : 'Place offset');
+                else if (toolMode === 'move') modeText = 'Click and drag to move the entire drawing';
+                else if (toolMode === 'split') modeText = 'Click on a line or circle circumference to split';
+                else if (toolMode === 'connect') {
+                    if (connectFirst === null) modeText = 'Click a point to start connection';
+                    else modeText = 'Click another point (or empty space to create one) to connect';
+                }
+                if (dragTarget !== null) modeText = 'Dragging point...';
+                if (isMoving) modeText = 'Moving drawing...';
+                statusText.textContent = modeText;
+                document.getElementById('btnUndo').title = historyIndex > 0 ? `Undo (${historyIndex} steps)` : 'Undo';
+                document.getElementById('btnRedo').title = historyIndex < history.length - 1 ?
+                    `Redo (${history.length - historyIndex - 1} steps)` : 'Redo';
+            }
+
+            function polygonArea(indices) {
+                if (indices.length < 3) return 0;
+                let area = 0;
+                for (let i = 0; i < indices.length; i++) {
+                    const p1 = points[indices[i]],
+                        p2 = points[indices[(i + 1) % indices.length]];
+                    area += p1.x * p2.y - p2.x * p1.y;
+                }
+                return Math.abs(area / 2);
+            }
+
+            function polygonPerimeter(indices) {
+                let p = 0;
+                for (let i = 0; i < indices.length; i++) p += dist(points[indices[i]], points[indices[(i + 1) % indices
+                        .length]]);
+                return p;
+            }
+
+            // ── Toast ──
+            let toastTimer = null;
+
+            function showToast(msg) {
+                const el = document.getElementById('toast');
+                el.textContent = msg;
+                el.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+            }
+
+            // ── JSON Save/Load ──
+            function saveJSON() {
+                const state = captureState();
+                state._meta = {
+                    version: '1.0',
+                    darkMode,
+                    lineColor,
+                    lineWidthVal,
+                    lineDash,
+                    pointStyle,
+                    pointRadius,
+                    gridStyle,
+                    showLabels,
+                    showDistances,
+                    showAngles,
+                    showAlignmentGuides,
+                    showPerimeterArea
+                };
+                const json = JSON.stringify(state, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.download = 'geometry_project.json';
+                link.href = URL.createObjectURL(blob);
+                link.click();
+                URL.revokeObjectURL(link.href);
+                showToast('💾 JSON saved');
+            }
+
+            function loadJSON(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (!data.points) { showToast('❌ Invalid file'); return; }
+                        restoreState(data);
+                        if (data._meta) {
+                            const m = data._meta;
+                            if (m.darkMode !== undefined) {
+                                darkMode = m.darkMode;
+                                document.body.classList.toggle('dark-mode', darkMode);
+                                document.getElementById('darkModeToggle').checked = darkMode;
+                            }
+                            if (m.lineColor) { lineColor = m.lineColor;
+                                document.getElementById('lineColor').value = lineColor; }
+                            if (m.lineWidthVal) { lineWidthVal = m.lineWidthVal;
+                                document.getElementById('lineWidth').value = lineWidthVal; }
+                            if (m.lineDash) { lineDash = m.lineDash;
+                                document.getElementById('lineDash').value = lineDash.join(',') || ''; }
+                            if (m.pointStyle) { pointStyle = m.pointStyle;
+                                document.getElementById('pointStyle').value = pointStyle; }
+                            if (m.pointRadius) { pointRadius = m.pointRadius;
+                                document.getElementById('pointSize').value = pointRadius; }
+                            if (m.gridStyle) { gridStyle = m.gridStyle;
+                                document.getElementById('gridStyle').value = gridStyle; }
+                            if (m.showLabels !== undefined) { showLabels = m.showLabels;
+                                document.getElementById('showLabels').checked = showLabels; }
+                            if (m.showDistances !== undefined) { showDistances = m.showDistances;
+                                document.getElementById('showDistances').checked = showDistances; }
+                            if (m.showAngles !== undefined) { showAngles = m.showAngles;
+                                document.getElementById('showAngles').checked = showAngles; }
+                            if (m.showAlignmentGuides !== undefined) { showAlignmentGuides = m.showAlignmentGuides;
+                                document.getElementById('showAlignment').checked = showAlignmentGuides; }
+                            if (m.showPerimeterArea !== undefined) { showPerimeterArea = m.showPerimeterArea;
+                                document.getElementById('showPerimArea').checked = showPerimeterArea; }
+                        }
+                        pushHistory();
+                        render();
+                        showToast('📂 JSON loaded');
+                    } catch (err) {
+                        showToast('❌ Error loading file');
+                        console.error(err);
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            // ── Auto-save ──
+            function saveToLocalStorage() {
+                try {
+                    const state = captureState();
+                    state._meta = {
+                        version: '1.0',
+                        darkMode,
+                        lineColor,
+                        lineWidthVal,
+                        lineDash,
+                        pointStyle,
+                        pointRadius,
+                        gridStyle,
+                        showLabels,
+                        showDistances,
+                        showAngles,
+                        showAlignmentGuides,
+                        showPerimeterArea
+                    };
+                    localStorage.setItem('geometry_pro_state', JSON.stringify(state));
+                } catch (e) { /* ignore */ }
+            }
+
+            function loadFromLocalStorage() {
+                try {
+                    const raw = localStorage.getItem('geometry_pro_state');
+                    if (!raw) return false;
+                    const data = JSON.parse(raw);
+                    if (!data.points) return false;
+                    restoreState(data);
+                    if (data._meta) {
+                        const m = data._meta;
+                        if (m.darkMode !== undefined) {
+                            darkMode = m.darkMode;
+                            document.body.classList.toggle('dark-mode', darkMode);
+                            document.getElementById('darkModeToggle').checked = darkMode;
+                        }
+                        if (m.lineColor) { lineColor = m.lineColor;
+                            document.getElementById('lineColor').value = lineColor; }
+                        if (m.lineWidthVal) { lineWidthVal = m.lineWidthVal;
+                            document.getElementById('lineWidth').value = lineWidthVal; }
+                        if (m.lineDash) { lineDash = m.lineDash;
+                            document.getElementById('lineDash').value = lineDash.join(',') || ''; }
+                        if (m.pointStyle) { pointStyle = m.pointStyle;
+                            document.getElementById('pointStyle').value = pointStyle; }
+                        if (m.pointRadius) { pointRadius = m.pointRadius;
+                            document.getElementById('pointSize').value = pointRadius; }
+                        if (m.gridStyle) { gridStyle = m.gridStyle;
+                            document.getElementById('gridStyle').value = gridStyle; }
+                        if (m.showLabels !== undefined) { showLabels = m.showLabels;
+                            document.getElementById('showLabels').checked = showLabels; }
+                        if (m.showDistances !== undefined) { showDistances = m.showDistances;
+                            document.getElementById('showDistances').checked = showDistances; }
+                        if (m.showAngles !== undefined) { showAngles = m.showAngles;
+                            document.getElementById('showAngles').checked = showAngles; }
+                        if (m.showAlignmentGuides !== undefined) { showAlignmentGuides = m.showAlignmentGuides;
+                            document.getElementById('showAlignment').checked = showAlignmentGuides; }
+                        if (m.showPerimeterArea !== undefined) { showPerimeterArea = m.showPerimeterArea;
+                            document.getElementById('showPerimArea').checked = showPerimeterArea; }
+                    }
+                    pushHistory();
+                    render();
+                    return true;
+                } catch (e) { return false; }
+            }
+
+            let saveTimer = null;
+
+            function autoSave() {
+                clearTimeout(saveTimer);
+                saveTimer = setTimeout(() => saveToLocalStorage(), 500);
+            }
+
+            const origPushHistory = pushHistory;
+            pushHistory = function() {
+                origPushHistory();
+                autoSave();
+            };
+
+            // ── Events ──
+            function findNearby(pos, r = HIT_R) {
+                for (let i = points.length - 1; i >= 0; i--) {
+                    if (dist(pos, points[i]) <= r) return i;
+                }
+                return null;
+            }
+
+            function isNearFirst(pos) {
+                if (!currentPolyline || currentPolyline.length < 3) return false;
+                const first = points[currentPolyline[0]];
+                return first && dist(pos, first) <= CLOSE_R;
+            }
+
+            function finalizeDimension() {
+                if (dimP1 !== null && dimP2 !== null) {
+                    dimensions.push({ p1Idx: dimP1, p2Idx: dimP2, offsetPoint: { ...mouseCanvasPos } });
+                    dimP1 = null;
+                    dimP2 = null;
+                    dimStep = 0;
+                }
+            }
+
+            // ── MOUSE EVENTS ──
+
+            canvas.addEventListener('mousedown', e => {
+                if (e.button !== 0) return;
+                const pos = getPos(e);
+                const nearby = findNearby(pos);
+
+                // ── MOVE tool ──
+                if (toolMode === 'move') {
+                    moveStartPos = { x: pos.x, y: pos.y };
+                    moveStartPoints = points.map(p => ({ ...p }));
+                    isMoving = true;
+                    render();
+                    return;
+                }
+
+                // ── CONNECT tool – handle BEFORE drag ──
+                if (toolMode === 'connect') {
+                    const action = () => {
+                        if (connectFirst === null) {
+                            // First click: select a point
+                            if (nearby !== null) {
+                                connectFirst = nearby;
+                                showToast('🔗 First point selected');
+                            } else {
+                                showToast('Click on a point to start');
+                            }
+                        } else {
+                            // Second click: connect to another point
+                            let targetIdx = nearby;
+                            if (targetIdx === null) {
+                                // Create a new point at the click location
+                                targetIdx = addPoint(pos.x, pos.y, false);
+                            }
+                            if (targetIdx !== connectFirst) {
+                                addConnection(connectFirst, targetIdx);
+                                showToast('🔗 Connected');
+                            } else {
+                                showToast('Cannot connect a point to itself');
+                            }
+                            connectFirst = null;
+                        }
+                        render();
+                        updateStatusBar();
+                    };
+                    withHistory(action);
+                    return;
+                }
+
+                // ── DRAG (for other tools) ──
+                if (nearby !== null) {
+                    dragTarget = nearby;
+                    isDragging = true;
+                    render();
+                    return;
+                }
+
+                // ── Other tool actions ──
+                const action = () => {
+                    if (toolMode === 'polygon') {
+                        if (isNearFirst(pos) && currentPolyline && currentPolyline.length >= 3) {
+                            closeCurrentPolyline();
+                            render();
+                            return;
+                        }
+                        addPoint(pos.x, pos.y, true);
+                    } else if (toolMode === 'circle') {
+                        if (circleStep === 0) {
+                            circleTemp.centerIdx = nearby !== null ? nearby : addPoint(pos.x, pos.y, false);
+                            circleStep = 1;
+                        } else if (circleStep === 1) {
+                            const radIdx = nearby !== null ? nearby : addPoint(pos.x, pos.y, false);
+                            circleTemp.radiusIdx = radIdx;
+                            circleStep = 2;
+                        } else if (circleStep === 2) {
+                            const endIdx = nearby !== null ? nearby : addPoint(pos.x, pos.y, false);
+                            finalizeArc(circleTemp.centerIdx, circleTemp.radiusIdx, endIdx);
+                            circleStep = 0;
+                            circleTemp = {};
+                        }
+                    } else if (toolMode === 'split') {
+                        const seg = findClosestSegment(pos.x, pos.y);
+                        if (seg) {
+                            splitSegment(seg);
+                            showToast('✂️ Segment split');
+                            return;
+                        }
+                        const circ = findClosestCircle(pos.x, pos.y);
+                        if (circ) {
+                            splitCircleAtPoint(circ.circleIdx, circ.proj, circ.angle);
+                            showToast('✂️ Circle split at point');
+                            return;
+                        }
+                        showToast('No segment or circle found to split');
+                    } else if (toolMode === 'delete') {
+                        if (nearby !== null) deletePoint(nearby);
+                    } else if (toolMode === 'rect') {
+                        if (rectCorner === null) rectCorner = pos;
+                        else { createRectangle(rectCorner, pos);
+                            rectCorner = null; }
+                    } else if (toolMode === 'ngon') {
+                        if (ngonCenter === null) {
+                            ngonCenter = nearby !== null ? points[nearby] : pos;
+                            if (nearby === null) ngonCenter = { x: pos.x, y: pos.y };
+                        } else {
+                            const radiusPt = nearby !== null ? points[nearby] : pos;
+                            const sides = parseInt(prompt('Number of sides?', '6'));
+                            if (sides && sides >= 3) createRegularPolygon(ngonCenter, radiusPt, sides);
+                            ngonCenter = null;
+                        }
+                    } else if (toolMode === 'ellipse') {
+                        if (ellipseStep === 0) {
+                            ellipseTemp.centerIdx = nearby !== null ? nearby : addPoint(pos.x, pos.y, false);
+                            ellipseStep = 1;
+                        } else if (ellipseStep === 1) {
+                            ellipseTemp.radXIdx = nearby !== null ? nearby : addPoint(pos.x, pos.y, false);
+                            ellipseStep = 2;
+                        } else {
+                            const ryIdx = nearby !== null ? nearby : addPoint(pos.x, pos.y, false);
+                            createEllipse(ellipseTemp.centerIdx, ellipseTemp.radXIdx, ryIdx);
+                            ellipseStep = 0;
+                            ellipseTemp = {};
+                        }
+                    } else if (toolMode === 'dimension') {
+                        if (dimStep === 0) { if (nearby !== null) { dimP1 = nearby;
+                                dimStep = 1; } } else if (dimStep === 1) { if (nearby !== null && nearby !== dimP1) {
+                                dimP2 = nearby;
+                                dimStep = 2; } } else { finalizeDimension(); }
+                    } else if (toolMode === 'text') {
+                        const txt = prompt('Enter annotation text:');
+                        if (txt) annotations.push({ x: pos.x, y: pos.y, text: txt });
+                    }
+                    render();
+                    updateStatusBar();
+                };
+
+                withHistory(action);
+            });
+
+            canvas.addEventListener('mousemove', e => {
+                const pos = getPos(e);
+                mouseCanvasPos = pos;
+
+                if (toolMode === 'move' && isMoving && moveStartPos && moveStartPoints) {
+                    const dx = pos.x - moveStartPos.x;
+                    const dy = pos.y - moveStartPos.y;
+                    for (let i = 0; i < points.length; i++) {
+                        points[i].x = moveStartPoints[i].x + dx;
+                        points[i].y = moveStartPoints[i].y + dy;
+                    }
+                    render();
+                    return;
+                }
+
+                if (isDragging && dragTarget !== null) {
+                    const snapped = snapAll(pos);
+                    points[dragTarget].x = snapped.x;
+                    points[dragTarget].y = snapped.y;
+                    let updatedCircles = new Set();
+                    for (let ci = 0; ci < circles.length; ci++) {
+                        const c = circles[ci];
+                        if (c.centerIdx === dragTarget || c.radiusIdx === dragTarget) {
+                            updatedCircles.add(ci);
+                        }
+                    }
+                    for (let ci of updatedCircles) {
+                        updateCircleAnchors(ci);
+                    }
+                    render();
+                    return;
+                }
+
+                hoveredPoint = findNearby(pos);
+                render();
+            });
+
+            canvas.addEventListener('mouseup', () => {
+                if (toolMode === 'move' && isMoving) {
+                    if (moveStartPos && moveStartPoints) {
+                        const dx = mouseCanvasPos.x - moveStartPos.x;
+                        const dy = mouseCanvasPos.y - moveStartPos.y;
+                        if (dx !== 0 || dy !== 0) {
+                            pushHistory();
+                            showToast('✋ Drawing moved');
+                        }
+                    }
+                    isMoving = false;
+                    moveStartPos = null;
+                    moveStartPoints = null;
+                    render();
+                    return;
+                }
+                isDragging = false;
+                dragTarget = null;
+                render();
+            });
+
+            canvas.addEventListener('mouseleave', () => {
+                if (toolMode === 'move' && isMoving) {
+                    if (moveStartPoints) {
+                        for (let i = 0; i < points.length; i++) {
+                            points[i].x = moveStartPoints[i].x;
+                            points[i].y = moveStartPoints[i].y;
+                        }
+                    }
+                    isMoving = false;
+                    moveStartPos = null;
+                    moveStartPoints = null;
+                    render();
+                    return;
+                }
+                isDragging = false;
+                dragTarget = null;
+                hoveredPoint = null;
+                render();
+            });
+
+            canvas.addEventListener('dblclick', e => {
+                const action = () => {
+                    if (toolMode === 'circle' && circleStep === 2) {
+                        finalizeFullCircle(circleTemp.centerIdx, circleTemp.radiusIdx);
+                        circleStep = 0;
+                        circleTemp = {};
+                        render();
+                    } else if (toolMode === 'polygon' && currentPolyline && currentPolyline.length >= 2) {
+                        closeCurrentPolyline();
+                        render();
+                    }
+                };
+                withHistory(action);
+            });
+
+            // ── KEYBOARD ──
+            window.addEventListener('keydown', e => {
+                if (e.key === 'Escape') {
+                    const action = () => {
+                        if (toolMode === 'circle' && circleStep === 2) {
+                            finalizeFullCircle(circleTemp.centerIdx, circleTemp.radiusIdx);
+                            circleStep = 0;
+                            circleTemp = {};
+                            render();
+                        } else {
+                            connectFirst = null;
+                            currentPolyline = null;
+                            circleStep = 0;
+                            circleTemp = {};
+                            dimStep = 0;
+                            rectCorner = null;
+                            ngonCenter = null;
+                            ellipseStep = 0;
+                            render();
+                        }
+                    };
+                    withHistory(action);
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                    e.preventDefault();
+                    undo();
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                    e.preventDefault();
+                    redo();
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    saveJSON();
+                }
+            });
+
+            // ── TOUCH EVENTS ──
+
+            canvas.addEventListener('touchstart', e => {
+                if (e.touches.length !== 1) return;
+                e.preventDefault();
+                const pos = getPos(e.touches[0]);
+                const nearby = findNearby(pos);
+
+                if (toolMode === 'move') {
+                    moveStartPos = { x: pos.x, y: pos.y };
+                    moveStartPoints = points.map(p => ({ ...p }));
+                    isMoving = true;
+                    render();
+                    return;
+                }
+
+                if (toolMode === 'connect') {
+                    const action = () => {
+                        if (connectFirst === null) {
+                            if (nearby !== null) {
+                                connectFirst = nearby;
+                                showToast('🔗 First point selected');
+                            } else {
+                                showToast('Click on a point to start');
+                            }
+                        } else {
+                            let targetIdx = nearby;
+                            if (targetIdx === null) {
+                                targetIdx = addPoint(pos.x, pos.y, false);
+                            }
+                            if (targetIdx !== connectFirst) {
+                                addConnection(connectFirst, targetIdx);
+                                showToast('🔗 Connected');
+                            } else {
+                                showToast('Cannot connect a point to itself');
+                            }
+                            connectFirst = null;
+                        }
+                        render();
+                        updateStatusBar();
+                    };
+                    withHistory(action);
+                    return;
+                }
+
+                if (nearby !== null) {
+                    dragTarget = nearby;
+                    isDragging = true;
+                    render();
+                    return;
+                }
+
+                const action = () => {
+                    if (toolMode === 'polygon') {
+                        if (isNearFirst(pos) && currentPolyline && currentPolyline.length >= 3) {
+                            closeCurrentPolyline();
+                            render();
+                            return;
+                        }
+                        addPoint(pos.x, pos.y, true);
+                    } else if (toolMode === 'circle') {
+                        if (circleStep === 0) {
+                            circleTemp.centerIdx = nearby !== null ? nearby : addPoint(pos.x, pos.y, false);
+                            circleStep = 1;
+                        } else if (circleStep === 1) {
+                            circleTemp.radiusIdx = nearby !== null ? nearby : addPoint(pos.x, pos.y, false);
+                            circleStep = 2;
+                        } else if (circleStep === 2) {
+                            const endIdx = nearby !== null ? nearby : addPoint(pos.x, pos.y, false);
+                            finalizeArc(circleTemp.centerIdx, circleTemp.radiusIdx, endIdx);
+                            circleStep = 0;
+                            circleTemp = {};
+                        }
+                    } else if (toolMode === 'split') {
+                        const seg = findClosestSegment(pos.x, pos.y);
+                        if (seg) { splitSegment(seg);
+                            showToast('✂️ Segment split');
+                            render(); return; }
+                        const circ = findClosestCircle(pos.x, pos.y);
+                        if (circ) {
+                            splitCircleAtPoint(circ.circleIdx, circ.proj, circ.angle);
+                            showToast('✂️ Circle split at point');
+                            render();
+                            return;
+                        }
+                        showToast('No segment or circle found to split');
+                    } else if (toolMode === 'delete') {
+                        if (nearby !== null) deletePoint(nearby);
+                    }
+                    render();
+                    updateStatusBar();
+                };
+                withHistory(action);
+            }, { passive: false });
+
+            canvas.addEventListener('touchmove', e => {
+                if (e.touches.length !== 1) return;
+                const pos = getPos(e.touches[0]);
+                mouseCanvasPos = pos;
+
+                if (toolMode === 'move' && isMoving && moveStartPos && moveStartPoints) {
+                    e.preventDefault();
+                    const dx = pos.x - moveStartPos.x;
+                    const dy = pos.y - moveStartPos.y;
+                    for (let i = 0; i < points.length; i++) {
+                        points[i].x = moveStartPoints[i].x + dx;
+                        points[i].y = moveStartPoints[i].y + dy;
+                    }
+                    render();
+                    return;
+                }
+
+                if (isDragging && dragTarget !== null) {
+                    e.preventDefault();
+                    const snapped = snapAll(pos);
+                    points[dragTarget].x = snapped.x;
+                    points[dragTarget].y = snapped.y;
+                    let updatedCircles = new Set();
+                    for (let ci = 0; ci < circles.length; ci++) {
+                        const c = circles[ci];
+                        if (c.centerIdx === dragTarget || c.radiusIdx === dragTarget) {
+                            updatedCircles.add(ci);
+                        }
+                    }
+                    for (let ci of updatedCircles) {
+                        updateCircleAnchors(ci);
+                    }
+                    render();
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchend', () => {
+                if (toolMode === 'move' && isMoving) {
+                    if (moveStartPos && moveStartPoints) {
+                        const dx = mouseCanvasPos.x - moveStartPos.x;
+                        const dy = mouseCanvasPos.y - moveStartPos.y;
+                        if (dx !== 0 || dy !== 0) {
+                            pushHistory();
+                            showToast('✋ Drawing moved');
+                        }
+                    }
+                    isMoving = false;
+                    moveStartPos = null;
+                    moveStartPoints = null;
+                    render();
+                    return;
+                }
+                isDragging = false;
+                dragTarget = null;
+                render();
+            });
+
+            // ── UI Bindings ──
+            function setMode(mode) {
+                toolMode = mode;
+                if (mode !== 'circle') { circleStep = 0;
+                    circleTemp = {}; }
+                connectFirst = null;
+                dimStep = 0;
+                rectCorner = null;
+                ngonCenter = null;
+                ellipseStep = 0;
+                isMoving = false;
+                moveStartPos = null;
+                moveStartPoints = null;
+                document.querySelectorAll('.toolbar .btn.active').forEach(b => b.classList.remove('active'));
+                const btn = document.getElementById(`mode${mode.charAt(0).toUpperCase()+mode.slice(1)}`);
+                if (btn) btn.classList.add('active');
+                render();
+                updateStatusBar();
+            }
+
+            document.getElementById('modePolygon').onclick = () => setMode('polygon');
+            document.getElementById('modeCircle').onclick = () => setMode('circle');
+            document.getElementById('modeConnect').onclick = () => setMode('connect');
+            document.getElementById('modeSplit').onclick = () => setMode('split');
+            document.getElementById('modeDelete').onclick = () => setMode('delete');
+            document.getElementById('modeMove').onclick = () => setMode('move');
+            document.getElementById('modeRect').onclick = () => setMode('rect');
+            document.getElementById('modeNgon').onclick = () => setMode('ngon');
+            document.getElementById('modeEllipse').onclick = () => setMode('ellipse');
+            document.getElementById('modeDimension').onclick = () => setMode('dimension');
+            document.getElementById('modeText').onclick = () => setMode('text');
+
+            document.getElementById('btnClose').onclick = () => {
+                const action = () => {
+                    if (currentPolyline && currentPolyline.length >= 3) closeCurrentPolyline();
+                    else if (toolMode === 'circle' && circleStep === 2) {
+                        finalizeFullCircle(circleTemp.centerIdx, circleTemp.radiusIdx);
+                        circleStep = 0;
+                        circleTemp = {};
+                    } else showToast('Nothing to close.');
+                    render();
+                };
+                withHistory(action);
+            };
+
+            document.getElementById('btnNew').onclick = () => {
+                const action = () => {
+                    currentPolyline = null;
+                    circleStep = 0;
+                    circleTemp = {};
+                    connectFirst = null;
+                    dimStep = 0;
+                    rectCorner = null;
+                    ngonCenter = null;
+                    ellipseStep = 0;
+                    render();
+                };
+                withHistory(action);
+            };
+
+            document.getElementById('btnUndo').onclick = undo;
+            document.getElementById('btnRedo').onclick = redo;
+
+            document.getElementById('btnClear').onclick = () => {
+                if (points.length && confirm('Clear everything?')) {
+                    const action = () => { clearAll();
+                        render(); };
+                    withHistory(action);
+                    showToast('🗑️ Cleared');
+                }
+            };
+
+            document.getElementById('btnClearHistory').onclick = () => {
+                if (confirm('Clear undo/redo history?')) {
+                    clearHistory();
+                    showToast('🗑️ History cleared');
+                }
+            };
+
+            document.getElementById('btnSaveJSON').onclick = saveJSON;
+            document.getElementById('btnLoadJSON').onclick = () => fileInput.click();
+            fileInput.addEventListener('change', e => {
+                if (e.target.files.length) {
+                    loadJSON(e.target.files[0]);
+                    e.target.value = '';
+                }
+            });
+
+            // Settings
+            document.getElementById('btnSettings').onclick = () => settingsPanel.classList.toggle('visible');
+
+            document.getElementById('darkModeToggle').onchange = function() {
+                darkMode = this.checked;
+                document.body.classList.toggle('dark-mode', darkMode);
+                render();
+                autoSave();
+            };
+
+            document.getElementById('lineColor').onchange = e => { lineColor = e.target.value;
+                render();
+                autoSave(); };
+            document.getElementById('lineWidth').onchange = e => { lineWidthVal = +e.target.value;
+                render();
+                autoSave(); };
+            document.getElementById('lineDash').onchange = e => { lineDash = e.target.value ? e.target.value.split(',').map(
+                    Number) : [];
+                render();
+                autoSave(); };
+            document.getElementById('pointStyle').onchange = e => { pointStyle = e.target.value;
+                render();
+                autoSave(); };
+            document.getElementById('pointSize').onchange = e => { pointRadius = +e.target.value;
+                render();
+                autoSave(); };
+            document.getElementById('gridStyle').onchange = e => { gridStyle = e.target.value;
+                render();
+                autoSave(); };
+            document.getElementById('showAlignment').onchange = e => { showAlignmentGuides = e.target.checked;
+                render();
+                autoSave(); };
+            document.getElementById('showPerimArea').onchange = e => { showPerimeterArea = e.target.checked;
+                render();
+                autoSave(); };
+            document.getElementById('showLabels').onchange = e => { showLabels = e.target.checked;
+                render();
+                autoSave(); };
+            document.getElementById('showDistances').onchange = e => { showDistances = e.target.checked;
+                render();
+                autoSave(); };
+            document.getElementById('showAngles').onchange = e => { showAngles = e.target.checked;
+                render();
+                autoSave(); };
+
+            // Snap toggles
+            document.getElementById('snapGrid').onchange = e => { snapGrid = e.target.checked;
+                render(); };
+            document.getElementById('snapPoint').onchange = e => { snapPoint = e.target.checked;
+                render(); };
+            document.getElementById('snapLine').onchange = e => { snapLine = e.target.checked;
+                render(); };
+            document.getElementById('snapMid').onchange = e => { snapMid = e.target.checked;
+                render(); };
+            document.getElementById('snapInter').onchange = e => { snapInter = e.target.checked;
+                render(); };
+            document.getElementById('snapTangent').onchange = e => { snapTangent = e.target.checked;
+                render(); };
+            document.getElementById('snapPerp').onchange = e => { snapPerp = e.target.checked;
+                render(); };
+            document.getElementById('snapEllipseTang').onchange = e => { snapEllipseTang = e.target.checked;
+                render(); };
+            document.getElementById('snapParallel').onchange = e => { snapParallel = e.target.checked;
+                render(); };
+            document.getElementById('snapExtend').onchange = e => { snapExtend = e.target.checked;
+                render(); };
+            document.getElementById('snapObj').onchange = e => { snapObj = e.target.checked;
+                render(); };
+
+            // ── roundRect polyfill ──
+            if (!ctx.roundRect) {
+                ctx.roundRect = function(x, y, w, h, r) {
+                    if (typeof r === 'number') r = { tl: r, tr: r, br: r, bl: r };
+                    this.beginPath();
+                    this.moveTo(x + r.tl, y);
+                    this.lineTo(x + w - r.tr, y);
+                    this.quadraticCurveTo(x + w, y, x + w, y + r.tr);
+                    this.lineTo(x + w, y + h - r.br);
+                    this.quadraticCurveTo(x + w, y + h, x + w - r.br, y + h);
+                    this.lineTo(x + r.bl, y + h);
+                    this.quadraticCurveTo(x, y + h, x, y + h - r.bl);
+                    this.lineTo(x, y + r.tl);
+                    this.quadraticCurveTo(x, y, x + r.tl, y);
+                    this.closePath();
+                };
+            }
+
+            // ── Init ──
+            function init() {
+                resizeCanvas();
+                const loaded = loadFromLocalStorage();
+                if (!loaded) pushHistory();
+                updateUndoButtons();
+                render();
+                showToast('📐 Geometry Pro ready');
+            }
+
+            window.addEventListener('beforeunload', () => saveToLocalStorage());
+            init();
+
+            window.__geo = { points, adjacency, polygons, circles, history, undo, redo, saveJSON };
+
+        })();
+    </script>
+</body>
+</html>
