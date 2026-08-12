@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Mouse / Touch Indicator</title>
+    <style>
+        /* ── Reset & base ── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #0b0d15;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
+            /* prevent scroll/pinch while interacting */;
+        }
+
+        /* ── Content card ── */
+        .content {
+            text-align: center;
+            color: #eef2ff;
+            padding: 2rem 1.5rem;
+            max-width: 560px;
+            width: 100%;
+            pointer-events: none;
+            /* let touches pass to indicator */;
+        }
+
+        .content h1 {
+            font-size: 2.4rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+        }
+
+        .content p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #94a3b8;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .content .badge {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.4rem 1.2rem;
+            border-radius: 40px;
+            background: rgba(167, 139, 250, 0.12);
+            border: 1px solid rgba(167, 139, 250, 0.20);
+            color: #c4b5fd;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        /* ── The indicator ── */
+        #indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            pointer-events: none;
+            /* never block clicks/touches */
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+
+            /* ---- visual ---- */
+            background: radial-gradient(circle at 35% 35%,
+                    rgba(167, 139, 250, 0.55),
+                    rgba(96, 165, 250, 0.30) 60%,
+                    rgba(167, 139, 250, 0.10) 100%);
+            border: 1.5px solid rgba(167, 139, 250, 0.50);
+            box-shadow:
+                0 0 24px rgba(167, 139, 250, 0.25),
+                inset 0 0 20px rgba(167, 139, 250, 0.10);
+
+            /* ---- transition for smooth follow ---- */
+            transition: width 0.18s ease, height 0.18s ease,
+                background 0.25s ease, border-color 0.25s ease,
+                box-shadow 0.25s ease;
+            will-change: transform, width, height;
+        }
+
+        /* ── inner glow dot ── */
+        #indicator::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.60);
+            box-shadow: 0 0 16px rgba(167, 139, 250, 0.50);
+            transition: width 0.2s ease, height 0.2s ease, opacity 0.2s ease;
+        }
+
+        /* ── "pressed" state (touch/mouse down) ── */
+        #indicator.active {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at 35% 35%,
+                    rgba(167, 139, 250, 0.70),
+                    rgba(96, 165, 250, 0.40) 60%,
+                    rgba(167, 139, 250, 0.15) 100%);
+            border-color: rgba(167, 139, 250, 0.80);
+            box-shadow: 0 0 40px rgba(167, 139, 250, 0.40);
+        }
+
+        #indicator.active::after {
+            width: 6px;
+            height: 6px;
+            opacity: 0.8;
+        }
+
+        /* ── hidden when idle (optional) ── */
+        #indicator.idle {
+            opacity: 0;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            transform: translate(-50%, -50%) scale(0.85);
+        }
+
+        /* ── responsive tweaks ── */
+        @media (max-width: 480px) {
+            #indicator {
+                width: 44px;
+                height: 44px;
+            }
+            #indicator::after {
+                width: 8px;
+                height: 8px;
+            }
+            .content h1 {
+                font-size: 1.8rem;
+            }
+            .content p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ─── Content ─── -->
+    <div class="content">
+        <h1>✦ Follow me</h1>
+        <p>Move your finger or mouse around &mdash; the glow follows.</p>
+        <span class="badge">⬤ touch · drag · click</span>
+    </div>
+
+    <!-- ─── The indicator element ─── -->
+    <div id="indicator" class="idle"></div>
+
+    <!-- ─── Script ─── -->
+    <script>
+        (function() {
+            'use strict';
+
+            const indicator = document.getElementById('indicator');
+
+            // ── state ──
+            let active = false;
+            let idleTimeout = null;
+            const IDLE_DELAY = 1200; // ms before fading out
+
+            // ── position ──
+            function moveIndicator(x, y) {
+                indicator.style.left = x + 'px';
+                indicator.style.top = y + 'px';
+            }
+
+            // ── show / hide idle ──
+            function showIndicator() {
+                indicator.classList.remove('idle');
+                clearTimeout(idleTimeout);
+            }
+
+            function scheduleIdle() {
+                clearTimeout(idleTimeout);
+                idleTimeout = setTimeout(() => {
+                    indicator.classList.add('idle');
+                }, IDLE_DELAY);
+            }
+
+            // ── set active state (pressed) ──
+            function setActive(state) {
+                if (state) {
+                    indicator.classList.add('active');
+                } else {
+                    indicator.classList.remove('active');
+                }
+                active = state;
+            }
+
+            // ── unified handler ──
+            function handleMove(clientX, clientY) {
+                showIndicator();
+                moveIndicator(clientX, clientY);
+                scheduleIdle();
+            }
+
+            function handleStart(clientX, clientY) {
+                showIndicator();
+                moveIndicator(clientX, clientY);
+                setActive(true);
+                scheduleIdle();
+            }
+
+            function handleEnd() {
+                setActive(false);
+                scheduleIdle();
+            }
+
+            // ── Mouse events ──
+            document.addEventListener('mousemove', (e) => {
+                handleMove(e.clientX, e.clientY);
+            });
+
+            document.addEventListener('mousedown', (e) => {
+                handleStart(e.clientX, e.clientY);
+            });
+
+            document.addEventListener('mouseup', () => {
+                handleEnd();
+            });
+
+            // Also handle mouse leaving the window → fade out gracefully
+            document.addEventListener('mouseleave', () => {
+                setActive(false);
+                indicator.classList.add('idle');
+                clearTimeout(idleTimeout);
+            });
+
+            // ── Touch events ──
+            document.addEventListener('touchstart', (e) => {
+                const t = e.touches[0];
+                if (t) {
+                    handleStart(t.clientX, t.clientY);
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchmove', (e) => {
+                const t = e.touches[0];
+                if (t) {
+                    handleMove(t.clientX, t.clientY);
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', (e) => {
+                // If no touches remain, release active state
+                if (e.touches.length === 0) {
+                    handleEnd();
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchcancel', () => {
+                handleEnd();
+            }, { passive: true });
+
+            // ── Also handle pointer events for broader compatibility ──
+            // (but we already cover mouse + touch; pointer would be redundant)
+            // However, we want to ensure the indicator appears on first touch even if no move
+            // already covered by touchstart
+
+            // ── Ensure indicator is hidden initially ──
+            // We'll show it on first interaction, but we also want it visible if
+            // the user moves the mouse right away.  The idle class is applied
+            // initially, and mousemove will remove it.
+
+            // ── small extra: show indicator briefly on load to hint ──
+            setTimeout(() => {
+                // position in center of viewport
+                const cx = window.innerWidth / 2;
+                const cy = window.innerHeight / 2;
+                moveIndicator(cx, cy);
+                indicator.classList.remove('idle');
+                // fade out after a moment
+                setTimeout(() => {
+                    scheduleIdle();
+                }, 800);
+            }, 300);
+
+            // ── Also reposition on resize (keep indicator in bounds) ──
+            window.addEventListener('resize', () => {
+                // If indicator is visible and we have a current position,
+                // we could clamp it.  For simplicity we just keep it where it is.
+                // The user will move it again.
+            });
+
+            console.log('✨ Mouse / Touch indicator ready');
+        })();
+    </script>
+</body>
+</html>
