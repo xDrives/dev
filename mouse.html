@@ -3,102 +3,210 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Mouse / Touch Indicator</title>
+    <title>Virtual Mouse · Pro</title>
     <style>
-        /* ── Reset & base ── */
+        /* ─── reset & base ─── */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none;
         }
 
         body {
             min-height: 100vh;
             background: #0b0d15;
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             touch-action: none;
-            /* prevent scroll/pinch while interacting */;
+            padding-bottom: 90px;
+            /* space for toolbar */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
         }
 
-        /* ── Content card ── */
-        .content {
-            text-align: center;
-            color: #eef2ff;
-            padding: 2rem 1.5rem;
-            max-width: 560px;
+        /* ─── main content / test playground ─── */
+        .playground {
+            max-width: 640px;
             width: 100%;
-            pointer-events: none;
-            /* let touches pass to indicator */;
+            padding: 1.5rem 1.2rem 2rem;
+            color: #eef2ff;
         }
 
-        .content h1 {
-            font-size: 2.4rem;
+        .playground h1 {
+            font-size: 2rem;
             font-weight: 600;
-            letter-spacing: -0.02em;
             background: linear-gradient(135deg, #a78bfa, #60a5fa);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .content p {
-            font-size: 1.1rem;
-            line-height: 1.6;
+        .playground .sub {
             color: #94a3b8;
-            max-width: 400px;
-            margin: 0 auto;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            border-left: 2px solid #334155;
+            padding-left: 0.75rem;
         }
 
-        .content .badge {
-            display: inline-block;
-            margin-top: 1.5rem;
-            padding: 0.4rem 1.2rem;
+        /* ─── test cards ─── */
+        .grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .card {
+            background: #141824;
+            border-radius: 1.2rem;
+            padding: 1.2rem 1.5rem;
+            border: 1px solid #2a2f42;
+            transition: border-color 0.2s;
+        }
+
+        .card label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .btn {
+            background: #1e2438;
+            border: none;
+            padding: 0.6rem 1.2rem;
             border-radius: 40px;
-            background: rgba(167, 139, 250, 0.12);
-            border: 1px solid rgba(167, 139, 250, 0.20);
-            color: #c4b5fd;
+            color: #e2e8f0;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: 1px solid #334155;
+            transition: 0.15s;
+            pointer-events: auto;
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn-primary {
+            background: #4f46e5;
+            border-color: #6366f1;
+            color: #fff;
+        }
+        .btn-primary:active {
+            background: #4338ca;
+        }
+        .btn-danger {
+            background: #b91c1c;
+            border-color: #dc2626;
+            color: #fff;
+        }
+        .btn-success {
+            background: #15803d;
+            border-color: #22c55e;
+            color: #fff;
+        }
+
+        #draggable-box {
+            width: 100%;
+            height: 90px;
+            background: linear-gradient(135deg, #312e81, #4f46e5);
+            border-radius: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #c7d2fe;
+            border: 2px dashed #818cf8;
+            transition: background 0.2s, border-color 0.2s;
+            cursor: grab;
+            touch-action: none;
+        }
+        #draggable-box.dragging {
+            background: #4f46e5;
+            border-color: #a5b4fc;
+            cursor: grabbing;
+        }
+
+        #scroll-area {
+            height: 110px;
+            overflow-y: auto;
+            background: #0f121d;
+            border-radius: 0.6rem;
+            padding: 0.6rem 1rem;
+            border: 1px solid #2a2f42;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #cbd5e1;
+            scroll-behavior: smooth;
+        }
+        #scroll-area p {
+            margin: 0.3rem 0;
+        }
+        #scroll-area .highlight {
+            color: #a78bfa;
+            font-weight: 500;
+        }
+
+        /* ─── toast ─── */
+        #toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-80px);
+            background: #1e2438;
+            padding: 0.5rem 1.4rem;
+            border-radius: 40px;
+            border: 1px solid #4f46e5;
+            color: #e2e8f0;
             font-size: 0.85rem;
             font-weight: 500;
-            letter-spacing: 0.3px;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 10000;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        #toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
         }
 
-        /* ── The indicator ── */
+        /* ─── cursor indicator ─── */
         #indicator {
             position: fixed;
             top: 0;
             left: 0;
-            width: 56px;
-            height: 56px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
             pointer-events: none;
-            /* never block clicks/touches */
             z-index: 9999;
             transform: translate(-50%, -50%);
-
-            /* ---- visual ---- */
             background: radial-gradient(circle at 35% 35%,
                     rgba(167, 139, 250, 0.55),
                     rgba(96, 165, 250, 0.30) 60%,
                     rgba(167, 139, 250, 0.10) 100%);
             border: 1.5px solid rgba(167, 139, 250, 0.50);
-            box-shadow:
-                0 0 24px rgba(167, 139, 250, 0.25),
-                inset 0 0 20px rgba(167, 139, 250, 0.10);
-
-            /* ---- transition for smooth follow ---- */
-            transition: width 0.18s ease, height 0.18s ease,
-                background 0.25s ease, border-color 0.25s ease,
-                box-shadow 0.25s ease;
-            will-change: transform, width, height;
+            box-shadow: 0 0 24px rgba(167, 139, 250, 0.25), inset 0 0 20px rgba(167, 139, 250, 0.10);
+            transition: width 0.2s ease, height 0.2s ease, background 0.25s, border-color 0.25s, opacity 0.5s;
+            will-change: transform;
         }
-
-        /* ── inner glow dot ── */
         #indicator::after {
             content: '';
             position: absolute;
@@ -110,203 +218,616 @@
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.60);
             box-shadow: 0 0 16px rgba(167, 139, 250, 0.50);
-            transition: width 0.2s ease, height 0.2s ease, opacity 0.2s ease;
+            transition: 0.2s;
         }
-
-        /* ── "pressed" state (touch/mouse down) ── */
         #indicator.active {
-            width: 40px;
-            height: 40px;
+            width: 38px;
+            height: 38px;
             background: radial-gradient(circle at 35% 35%,
-                    rgba(167, 139, 250, 0.70),
-                    rgba(96, 165, 250, 0.40) 60%,
-                    rgba(167, 139, 250, 0.15) 100%);
+                    rgba(167, 139, 250, 0.75),
+                    rgba(96, 165, 250, 0.45) 60%,
+                    rgba(167, 139, 250, 0.20) 100%);
             border-color: rgba(167, 139, 250, 0.80);
             box-shadow: 0 0 40px rgba(167, 139, 250, 0.40);
         }
-
         #indicator.active::after {
             width: 6px;
             height: 6px;
-            opacity: 0.8;
         }
-
-        /* ── hidden when idle (optional) ── */
         #indicator.idle {
             opacity: 0;
             transition: opacity 0.6s ease, transform 0.6s ease;
             transform: translate(-50%, -50%) scale(0.85);
         }
+        #indicator.drag-mode {
+            border-color: #fbbf24;
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.35);
+        }
+        #indicator.drag-mode::after {
+            background: #fbbf24;
+            box-shadow: 0 0 20px #fbbf24;
+        }
 
-        /* ── responsive tweaks ── */
-        @media (max-width: 480px) {
+        /* ─── floating toolbar ─── */
+        #toolbar {
+            position: fixed;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(18, 22, 36, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid #334155;
+            border-radius: 60px;
+            padding: 0.5rem 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+            z-index: 10001;
+            transition: opacity 0.3s, transform 0.3s;
+            touch-action: auto;
+        }
+        #toolbar.hidden {
+            opacity: 0;
+            transform: translateX(-50%) translateY(20px);
+            pointer-events: none;
+        }
+        .tool-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 40px;
+            border: none;
+            background: transparent;
+            color: #cbd5e1;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.15s;
+            touch-action: auto;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid transparent;
+        }
+        .tool-btn:active {
+            transform: scale(0.88);
+            background: rgba(255, 255, 255, 0.10);
+        }
+        .tool-btn.active-btn {
+            background: #4f46e5;
+            color: #fff;
+            border-color: #818cf8;
+            box-shadow: 0 0 16px rgba(79, 70, 229, 0.4);
+        }
+        .tool-btn.drag-on {
+            background: #d97706;
+            color: #fff;
+            border-color: #fbbf24;
+            box-shadow: 0 0 16px rgba(251, 191, 36, 0.3);
+        }
+        .tool-btn.mini {
+            font-size: 1.2rem;
+            width: 36px;
+            height: 36px;
+        }
+        .tool-divider {
+            width: 1px;
+            height: 28px;
+            background: #334155;
+            margin: 0 0.15rem;
+        }
+
+        /* toggle restore button */
+        #restore-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #4f46e5;
+            border: none;
+            color: #fff;
+            font-size: 1.6rem;
+            box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            touch-action: auto;
+        }
+        #restore-btn.show {
+            display: flex;
+        }
+
+        /* ─── responsive ─── */
+        @media (max-width: 500px) {
+            #toolbar {
+                padding: 0.4rem 0.5rem;
+                gap: 0.1rem;
+                border-radius: 40px;
+            }
+            .tool-btn {
+                width: 38px;
+                height: 38px;
+                font-size: 0.9rem;
+            }
+            .tool-btn.mini {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+            }
             #indicator {
-                width: 44px;
-                height: 44px;
+                width: 40px;
+                height: 40px;
             }
             #indicator::after {
                 width: 8px;
                 height: 8px;
             }
-            .content h1 {
-                font-size: 1.8rem;
-            }
-            .content p {
-                font-size: 1rem;
+            .playground h1 {
+                font-size: 1.6rem;
             }
         }
     </style>
 </head>
-
 <body>
 
-    <!-- ─── Content ─── -->
-    <div class="content">
-        <h1>✦ Follow me</h1>
-        <p>Move your finger or mouse around &mdash; the glow follows.</p>
-        <span class="badge">⬤ touch · drag · click</span>
-    </div>
+    <!-- ─── Toast ─── -->
+    <div id="toast">✨ ready</div>
 
-    <!-- ─── The indicator element ─── -->
+    <!-- ─── Cursor ─── -->
     <div id="indicator" class="idle"></div>
 
-    <!-- ─── Script ─── -->
+    <!-- ─── Restore button (shows when toolbar hidden) ─── -->
+    <button id="restore-btn" aria-label="show toolbar">⌘</button>
+
+    <!-- ─── Toolbar ─── -->
+    <div id="toolbar">
+        <button class="tool-btn" data-action="left" title="Left click">🖱️</button>
+        <button class="tool-btn" data-action="right" title="Right click">🖱️R</button>
+        <button class="tool-btn" data-action="dbl" title="Double click">⏎</button>
+        <div class="tool-divider"></div>
+        <button class="tool-btn" data-action="scroll-up" title="Scroll up">⬆</button>
+        <button class="tool-btn" data-action="scroll-down" title="Scroll down">⬇</button>
+        <div class="tool-divider"></div>
+        <button class="tool-btn" data-action="drag-toggle" id="dragToggle" title="Toggle drag mode">↕</button>
+        <div class="tool-divider"></div>
+        <button class="tool-btn mini" data-action="minimize" title="Hide toolbar">−</button>
+    </div>
+
+    <!-- ─── Playground ─── -->
+    <div class="playground">
+        <h1>✦ Virtual Mouse</h1>
+        <div class="sub">Tap & drag to move · buttons to click · drag mode to grab</div>
+
+        <div class="grid">
+            <!-- click test -->
+            <div class="card">
+                <label>🖱️ click test</label>
+                <div class="row">
+                    <button class="btn btn-primary" id="testClick">click me</button>
+                    <button class="btn btn-danger" id="testRight">right‑click me</button>
+                    <button class="btn btn-success" id="testDbl">double‑click</button>
+                </div>
+            </div>
+
+            <!-- draggable -->
+            <div class="card">
+                <label>✋ drag test <span style="color:#94a3b8;font-weight:400;">(toggle drag mode)</span></label>
+                <div id="draggable-box">⬡ drag me</div>
+            </div>
+
+            <!-- scroll -->
+            <div class="card">
+                <label>📜 scroll test <span style="color:#94a3b8;font-weight:400;">(hover & use ⬆⬇)</span></label>
+                <div id="scroll-area">
+                    <p><span class="highlight">▸</span> Line 1 · scroll to see more</p>
+                    <p><span class="highlight">▸</span> Line 2 · virtual mouse works</p>
+                    <p><span class="highlight">▸</span> Line 3 · with buttons or touch</p>
+                    <p><span class="highlight">▸</span> Line 4 · try scrolling now</p>
+                    <p><span class="highlight">▸</span> Line 5 · smooth as silk</p>
+                    <p><span class="highlight">▸</span> Line 6 · 🎯 done</p>
+                </div>
+            </div>
+
+            <div class="card" style="border-color:#33415540;">
+                <label>💡 gesture hints</label>
+                <div style="font-size:0.85rem;color:#94a3b8;display:flex;flex-wrap:wrap;gap:0.5rem 1.2rem;">
+                    <span>👆 tap → left click</span>
+                    <span>👆 hold (0.5s) → right click</span>
+                    <span>👆👆 double tap → double click</span>
+                    <span>↕ drag mode → drag & drop</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         (function() {
             'use strict';
 
+            // ─── elements ───
             const indicator = document.getElementById('indicator');
+            const toast = document.getElementById('toast');
+            const toolbar = document.getElementById('toolbar');
+            const restoreBtn = document.getElementById('restore-btn');
+            const dragToggle = document.getElementById('dragToggle');
 
-            // ── state ──
-            let active = false;
-            let idleTimeout = null;
-            const IDLE_DELAY = 1200; // ms before fading out
+            // ─── cursor state ───
+            const cursor = {
+                x: window.innerWidth / 2,
+                y: window.innerHeight / 2
+            };
 
-            // ── position ──
+            let dragMode = false;
+            let isPointerDown = false; // for drag mode
+            let toastTimer = null;
+
+            // ─── gesture state ───
+            let touchStartTime = 0;
+            let touchStartX = 0,
+                touchStartY = 0;
+            let lastTapTime = 0;
+            let longPressTimer = null;
+            let isLongPressTriggered = false;
+
+            // ─── helpers ───
+            function showToast(msg, duration = 1200) {
+                toast.textContent = msg;
+                toast.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
+            }
+
             function moveIndicator(x, y) {
+                cursor.x = x;
+                cursor.y = y;
                 indicator.style.left = x + 'px';
                 indicator.style.top = y + 'px';
             }
 
-            // ── show / hide idle ──
             function showIndicator() {
                 indicator.classList.remove('idle');
-                clearTimeout(idleTimeout);
+                clearTimeout(indicator._idleTimer);
             }
 
             function scheduleIdle() {
-                clearTimeout(idleTimeout);
-                idleTimeout = setTimeout(() => {
-                    indicator.classList.add('idle');
-                }, IDLE_DELAY);
+                clearTimeout(indicator._idleTimer);
+                indicator._idleTimer = setTimeout(() => {
+                    if (!isPointerDown) indicator.classList.add('idle');
+                }, 1500);
             }
 
-            // ── set active state (pressed) ──
             function setActive(state) {
+                indicator.classList.toggle('active', state);
+                isPointerDown = state;
                 if (state) {
-                    indicator.classList.add('active');
+                    showIndicator();
                 } else {
-                    indicator.classList.remove('active');
+                    scheduleIdle();
                 }
-                active = state;
             }
 
-            // ── unified handler ──
-            function handleMove(clientX, clientY) {
+            function updateDragModeUI() {
+                indicator.classList.toggle('drag-mode', dragMode);
+                dragToggle.classList.toggle('drag-on', dragMode);
+                dragToggle.textContent = dragMode ? '↕✓' : '↕';
+                showToast(dragMode ? '🔄 Drag mode ON' : '🔄 Drag mode OFF', 800);
+            }
+
+            // ─── event dispatchers ───
+            function getTarget(x, y) {
+                // temporarily hide indicator to get element under cursor
+                const wasIdle = indicator.classList.contains('idle');
+                const wasActive = indicator.classList.contains('active');
+                indicator.style.pointerEvents = 'none';
+                indicator.style.display = 'none';
+                const el = document.elementFromPoint(x, y);
+                indicator.style.display = '';
+                indicator.style.pointerEvents = 'none';
+                if (!wasIdle) indicator.classList.remove('idle');
+                if (wasActive) indicator.classList.add('active');
+                return el;
+            }
+
+            function dispatchMouse(type, x, y, button = 0, buttons = 1) {
+                const target = getTarget(x, y);
+                if (!target) return false;
+                const ev = new MouseEvent(type, {
+                    view: window,
+                    bubbles: true,
+                    cancelable: true,
+                    clientX: x,
+                    clientY: y,
+                    button,
+                    buttons,
+                    composed: true
+                });
+                const canceled = !target.dispatchEvent(ev);
+                // feedback
+                const label = type === 'click' ? '🖱️ click' :
+                    type === 'contextmenu' ? '🖱️ right' :
+                    type === 'dblclick' ? '⏎ double' :
+                    type === 'mousedown' ? '🔽 down' :
+                    type === 'mouseup' ? '🔼 up' : type;
+                if (type === 'click' || type === 'contextmenu' || type === 'dblclick') {
+                    showToast(`${label} @ ${Math.round(x)},${Math.round(y)}`, 600);
+                }
+                return !canceled;
+            }
+
+            function dispatchWheel(x, y, deltaY) {
+                const target = getTarget(x, y);
+                if (!target) return false;
+                const ev = new WheelEvent('wheel', {
+                    view: window,
+                    bubbles: true,
+                    cancelable: true,
+                    clientX: x,
+                    clientY: y,
+                    deltaY: deltaY,
+                    deltaMode: 0,
+                    composed: true
+                });
+                target.dispatchEvent(ev);
+                showToast(`📜 scroll ${deltaY > 0 ? 'down' : 'up'}`, 500);
+                return true;
+            }
+
+            // ─── toolbar actions ───
+            function handleToolAction(action) {
+                const x = cursor.x,
+                    y = cursor.y;
                 showIndicator();
-                moveIndicator(clientX, clientY);
+                switch (action) {
+                    case 'left':
+                        dispatchMouse('click', x, y);
+                        break;
+                    case 'right':
+                        dispatchMouse('contextmenu', x, y);
+                        break;
+                    case 'dbl':
+                        dispatchMouse('dblclick', x, y);
+                        break;
+                    case 'scroll-up':
+                        dispatchWheel(x, y, -50);
+                        break;
+                    case 'scroll-down':
+                        dispatchWheel(x, y, 50);
+                        break;
+                    case 'drag-toggle':
+                        dragMode = !dragMode;
+                        updateDragModeUI();
+                        break;
+                    case 'minimize':
+                        toolbar.classList.add('hidden');
+                        restoreBtn.classList.add('show');
+                        showToast('⌘ toolbar hidden', 600);
+                        break;
+                    default:
+                        break;
+                }
                 scheduleIdle();
             }
 
-            function handleStart(clientX, clientY) {
+            // ─── touch / pointer handlers ───
+            function handlePointerDown(clientX, clientY) {
                 showIndicator();
                 moveIndicator(clientX, clientY);
-                setActive(true);
+                touchStartTime = performance.now();
+                touchStartX = clientX;
+                touchStartY = clientY;
+                isLongPressTriggered = false;
+
+                if (dragMode) {
+                    // start drag: mousedown
+                    setActive(true);
+                    dispatchMouse('mousedown', clientX, clientY, 0, 1);
+                    // clear any idle
+                    clearTimeout(indicator._idleTimer);
+                } else {
+                    setActive(true);
+                    // start long press timer
+                    clearTimeout(longPressTimer);
+                    longPressTimer = setTimeout(() => {
+                        // if finger hasn't moved much
+                        const dx = cursor.x - touchStartX;
+                        const dy = cursor.y - touchStartY;
+                        if (Math.abs(dx) < 12 && Math.abs(dy) < 12) {
+                            isLongPressTriggered = true;
+                            dispatchMouse('contextmenu', cursor.x, cursor.y);
+                            showToast('🖱️ right (long press)', 700);
+                        }
+                        clearTimeout(longPressTimer);
+                    }, 500);
+                }
+            }
+
+            function handlePointerMove(clientX, clientY) {
+                moveIndicator(clientX, clientY);
+                showIndicator();
+
+                if (dragMode && isPointerDown) {
+                    // mousemove while dragging
+                    dispatchMouse('mousemove', clientX, clientY, 0, 1);
+                }
+                // reset idle timer
                 scheduleIdle();
             }
 
-            function handleEnd() {
+            function handlePointerUp(clientX, clientY) {
                 setActive(false);
+
+                if (dragMode && isPointerDown) {
+                    dispatchMouse('mouseup', clientX, clientY, 0, 0);
+                    // also reset any drag state
+                }
+
+                if (!dragMode && !isLongPressTriggered) {
+                    // check if it was a tap or double tap
+                    const dt = performance.now() - touchStartTime;
+                    const dx = cursor.x - touchStartX;
+                    const dy = cursor.y - touchStartY;
+                    if (dt < 300 && Math.abs(dx) < 12 && Math.abs(dy) < 12) {
+                        // tap
+                        const now = performance.now();
+                        if (now - lastTapTime < 350) {
+                            // double tap
+                            dispatchMouse('dblclick', cursor.x, cursor.y);
+                            showToast('⏎ double tap', 600);
+                            lastTapTime = 0;
+                        } else {
+                            // single tap -> left click
+                            dispatchMouse('click', cursor.x, cursor.y);
+                            lastTapTime = now;
+                        }
+                    } else {
+                        // moved -> just a drag (no click)
+                        lastTapTime = 0;
+                    }
+                }
+
+                clearTimeout(longPressTimer);
+                isLongPressTriggered = false;
                 scheduleIdle();
             }
 
-            // ── Mouse events ──
+            // ─── mouse events (desktop fallback) ───
             document.addEventListener('mousemove', (e) => {
-                handleMove(e.clientX, e.clientY);
+                // ignore if over toolbar
+                if (e.target.closest && e.target.closest('#toolbar')) return;
+                handlePointerMove(e.clientX, e.clientY);
             });
 
             document.addEventListener('mousedown', (e) => {
-                handleStart(e.clientX, e.clientY);
+                if (e.target.closest && e.target.closest('#toolbar')) return;
+                if (e.button === 0) {
+                    handlePointerDown(e.clientX, e.clientY);
+                }
             });
 
-            document.addEventListener('mouseup', () => {
-                handleEnd();
+            document.addEventListener('mouseup', (e) => {
+                if (e.target.closest && e.target.closest('#toolbar')) return;
+                if (e.button === 0 && isPointerDown) {
+                    handlePointerUp(e.clientX, e.clientY);
+                }
             });
 
-            // Also handle mouse leaving the window → fade out gracefully
             document.addEventListener('mouseleave', () => {
                 setActive(false);
                 indicator.classList.add('idle');
-                clearTimeout(idleTimeout);
+                clearTimeout(longPressTimer);
             });
 
-            // ── Touch events ──
+            // ─── touch events ───
             document.addEventListener('touchstart', (e) => {
+                if (e.target.closest && e.target.closest('#toolbar')) return;
                 const t = e.touches[0];
                 if (t) {
-                    handleStart(t.clientX, t.clientY);
+                    handlePointerDown(t.clientX, t.clientY);
                 }
             }, { passive: true });
 
             document.addEventListener('touchmove', (e) => {
+                if (e.target.closest && e.target.closest('#toolbar')) return;
                 const t = e.touches[0];
                 if (t) {
-                    handleMove(t.clientX, t.clientY);
+                    // prevent scroll if drag mode
+                    if (dragMode) e.preventDefault();
+                    handlePointerMove(t.clientX, t.clientY);
                 }
-            }, { passive: true });
+            }, { passive: false });
 
             document.addEventListener('touchend', (e) => {
-                // If no touches remain, release active state
-                if (e.touches.length === 0) {
-                    handleEnd();
-                }
+                if (e.target.closest && e.target.closest('#toolbar')) return;
+                // use last known cursor position
+                handlePointerUp(cursor.x, cursor.y);
             }, { passive: true });
 
             document.addEventListener('touchcancel', () => {
-                handleEnd();
+                setActive(false);
+                clearTimeout(longPressTimer);
+                scheduleIdle();
             }, { passive: true });
 
-            // ── Also handle pointer events for broader compatibility ──
-            // (but we already cover mouse + touch; pointer would be redundant)
-            // However, we want to ensure the indicator appears on first touch even if no move
-            // already covered by touchstart
-
-            // ── Ensure indicator is hidden initially ──
-            // We'll show it on first interaction, but we also want it visible if
-            // the user moves the mouse right away.  The idle class is applied
-            // initially, and mousemove will remove it.
-
-            // ── small extra: show indicator briefly on load to hint ──
-            setTimeout(() => {
-                // position in center of viewport
-                const cx = window.innerWidth / 2;
-                const cy = window.innerHeight / 2;
-                moveIndicator(cx, cy);
-                indicator.classList.remove('idle');
-                // fade out after a moment
-                setTimeout(() => {
-                    scheduleIdle();
-                }, 800);
-            }, 300);
-
-            // ── Also reposition on resize (keep indicator in bounds) ──
-            window.addEventListener('resize', () => {
-                // If indicator is visible and we have a current position,
-                // we could clamp it.  For simplicity we just keep it where it is.
-                // The user will move it again.
+            // ─── toolbar click events ───
+            toolbar.addEventListener('click', (e) => {
+                const btn = e.target.closest('.tool-btn');
+                if (!btn) return;
+                const action = btn.dataset.action;
+                if (action) {
+                    e.stopPropagation();
+                    handleToolAction(action);
+                }
             });
 
-            console.log('✨ Mouse / Touch indicator ready');
+            // restore button
+            restoreBtn.addEventListener('click', () => {
+                toolbar.classList.remove('hidden');
+                restoreBtn.classList.remove('show');
+                showToast('⌘ toolbar restored', 600);
+            });
+
+            // ─── test buttons (native click handlers to show feedback) ───
+            document.getElementById('testClick').addEventListener('click', () => {
+                showToast('✅ left click detected!', 800);
+            });
+            document.getElementById('testRight').addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showToast('✅ right click detected!', 800);
+            });
+            document.getElementById('testDbl').addEventListener('dblclick', () => {
+                showToast('✅ double click detected!', 800);
+            });
+
+            // draggable box native support
+            const box = document.getElementById('draggable-box');
+            let boxOffsetX = 0,
+                boxOffsetY = 0;
+            let boxDragging = false;
+
+            box.addEventListener('mousedown', (e) => {
+                if (!dragMode) return;
+                const rect = box.getBoundingClientRect();
+                boxOffsetX = e.clientX - rect.left;
+                boxOffsetY = e.clientY - rect.top;
+                boxDragging = true;
+                box.classList.add('dragging');
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!boxDragging || !dragMode) return;
+                const x = e.clientX - boxOffsetX;
+                const y = e.clientY - boxOffsetY;
+                box.style.transform = `translate(${x}px, ${y}px)`;
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (boxDragging) {
+                    boxDragging = false;
+                    box.classList.remove('dragging');
+                }
+            });
+
+            // touch drag for box (passthrough from virtual mouse)
+            // the virtual mouse already dispatches mousedown/mousemove/mouseup, which trigger above.
+
+            // ─── init ───
+            // show cursor at center
+            const cx = window.innerWidth / 2,
+                cy = window.innerHeight / 2;
+            moveIndicator(cx, cy);
+            indicator.classList.remove('idle');
+            setTimeout(() => scheduleIdle(), 600);
+
+            // drag mode off by default
+            updateDragModeUI();
+
+            console.log('🖱️ Virtual Mouse ready');
         })();
     </script>
 </body>
