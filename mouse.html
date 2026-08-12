@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Smart Virtual Mouse · Center Zone</title>
+    <title>Virtual Mouse · Thin Plus + Dot</title>
     <style>
+        /* ─── reset & base ─── */
         * {
             margin: 0;
             padding: 0;
@@ -14,42 +15,52 @@
 
         body {
             min-height: 100vh;
-            background: #0a0c14;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: radial-gradient(circle at 50% 50%, #1a1a2e, #0f0c29);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             touch-action: none;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 1rem;
+            overflow: hidden;
         }
 
+        /* ─── demo panel ─── */
         .playground {
             max-width: 480px;
             width: 100%;
             color: #e2e8f0;
             text-align: center;
-            padding: 2rem 1.5rem;
-            background: #121624;
-            border-radius: 2rem;
-            border: 1px solid #2a2f42;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            padding: 2.5rem 1.8rem;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
             pointer-events: none;
         }
 
         .playground h1 {
-            font-size: 2rem;
-            font-weight: 600;
-            background: linear-gradient(135deg, #a78bfa, #60a5fa);
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00ffd1, #00a3ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
         }
 
         .playground p {
-            color: #94a3b8;
+            color: rgba(255, 255, 255, 0.6);
             font-size: 0.95rem;
-            margin-bottom: 1.8rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        .playground p strong {
+            color: #00ffd1;
+            font-weight: 600;
         }
 
         .demo-grid {
@@ -61,166 +72,233 @@
         }
 
         .btn {
-            background: #1e2438;
-            border: 1px solid #334155;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             padding: 0.7rem 1.4rem;
-            border-radius: 40px;
+            border-radius: 60px;
             color: #e2e8f0;
-            font-weight: 500;
+            font-weight: 600;
             font-size: 0.95rem;
             cursor: pointer;
-            transition: 0.15s;
+            transition: 0.2s ease;
             pointer-events: auto;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            flex: 1 0 auto;
         }
         .btn:active {
             transform: scale(0.94);
-            background: #2a3048;
         }
         .btn-primary {
-            background: #4f46e5;
-            border-color: #6366f1;
-            color: #fff;
+            background: rgba(0, 255, 209, 0.15);
+            border-color: rgba(0, 255, 209, 0.4);
+            color: #00ffd1;
+        }
+        .btn-primary:active {
+            background: rgba(0, 255, 209, 0.3);
         }
         .btn-success {
-            background: #15803d;
-            border-color: #22c55e;
-            color: #fff;
+            background: rgba(0, 163, 255, 0.15);
+            border-color: rgba(0, 163, 255, 0.4);
+            color: #00a3ff;
+        }
+        .btn-success:active {
+            background: rgba(0, 163, 255, 0.3);
         }
 
-        #feedback {
+        #click-log {
             margin-top: 1.5rem;
-            padding: 0.8rem;
-            border-radius: 0.8rem;
-            background: #0f121d;
-            border: 1px dashed #334155;
-            color: #94a3b8;
-            font-size: 0.9rem;
+            padding: 0.8rem 1.2rem;
+            border-radius: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
             min-height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: 0.2s;
             pointer-events: none;
+            font-weight: 500;
+            letter-spacing: 0.3px;
         }
-        #feedback.hit {
-            border-color: #a78bfa;
-            color: #c4b5fd;
-            background: #1a1e30;
+        #click-log.hit {
+            border-color: rgba(0, 255, 209, 0.4);
+            color: #00ffd1;
+            background: rgba(0, 255, 209, 0.05);
         }
 
-        /* ─── Circle (main cursor) ─── */
+        /* ─── Circle (main cursor / trigger) ─── */
         #circle {
             position: fixed;
-            width: 70px;
-            height: 70px;
+            left: 0;
+            top: 0;
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, #818cf8, #4338ca);
-            border: 2.5px solid #a5b4fc;
-            box-shadow: 0 8px 40px rgba(79, 70, 229, 0.5);
-            color: #fff;
-            font-weight: 600;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.12), rgba(0, 0, 0, 0.6));
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 2px solid rgba(0, 255, 209, 0.6);
+            box-shadow:
+                0 0 60px rgba(0, 255, 209, 0.1),
+                inset 0 0 40px rgba(0, 255, 209, 0.03);
             transform: translate(-50%, -50%);
             cursor: pointer;
             z-index: 10000;
             touch-action: none;
-            transition: transform 0.12s ease, box-shadow 0.15s, border-color 0.15s;
-            letter-spacing: 0.3px;
+            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.3s ease,
+                border-color 0.3s ease;
             will-change: transform;
             user-select: none;
+            pointer-events: auto;
+            animation: pulse-glow 3s ease-in-out infinite;
         }
+
         #circle:active {
             transform: translate(-50%, -50%) scale(0.88);
-            box-shadow: 0 4px 24px rgba(79, 70, 229, 0.7);
-            border-color: #c7d2fe;
-        }
-        #circle .sub {
-            font-size: 0.6rem;
-            opacity: 0.7;
-            display: block;
-            margin-top: -2px;
+            box-shadow: 0 0 80px rgba(0, 255, 209, 0.25);
+            border-color: rgba(0, 255, 209, 1);
         }
 
-        /* ─── Arrow (target indicator) ─── */
-        #arrow {
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 30px rgba(0, 255, 209, 0.08), inset 0 0 30px rgba(0, 255, 209, 0.02);
+            }
+            50% {
+                box-shadow: 0 0 70px rgba(0, 255, 209, 0.15), inset 0 0 50px rgba(0, 255, 209, 0.04);
+            }
+            100% {
+                box-shadow: 0 0 30px rgba(0, 255, 209, 0.08), inset 0 0 30px rgba(0, 255, 209, 0.02);
+            }
+        }
+
+        #circle::after {
+            content: '';
+            position: absolute;
+            inset: 6px;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 255, 209, 0.12);
+            pointer-events: none;
+        }
+
+        /* ─── Thin Plus + 4px Dot (target indicator) ─── */
+        #reticle {
             position: fixed;
-            width: 30px;
-            height: 42px;
-            background: #facc15;
-            clip-path: polygon(50% 0%, 0% 100%, 50% 65%, 100% 100%);
-            filter: drop-shadow(0 4px 16px rgba(250, 204, 21, 0.7));
-            transform: translate(-50%, -100%);
+            left: 0;
+            top: 0;
+            width: 48px;
+            height: 48px;
+            transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 9999;
-            transition: opacity 0.4s ease;
+            transition: opacity 0.2s ease;
             will-change: transform;
-        }
-        #arrow.idle {
-            opacity: 0;
+            filter: drop-shadow(0 0 20px rgba(0, 255, 209, 0.4));
         }
 
-        /* ─── Toast ─── */
+        #reticle svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ─── toast notification ─── */
         #toast {
             position: fixed;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%) translateY(20px);
-            background: #1e2438;
-            padding: 0.4rem 1.2rem;
-            border-radius: 40px;
-            border: 1px solid #4f46e5;
+            background: rgba(20, 20, 40, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 0.6rem 1.6rem;
+            border-radius: 60px;
+            border: 1px solid rgba(0, 255, 209, 0.2);
             color: #e2e8f0;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 500;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
             opacity: 0;
-            transition: 0.25s ease;
+            transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             pointer-events: none;
             z-index: 99999;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            white-space: nowrap;
         }
         #toast.show {
             opacity: 1;
             transform: translateX(-50%) translateY(0);
         }
 
+        /* ─── responsive ─── */
         @media (max-width: 480px) {
             #circle {
-                width: 60px;
-                height: 60px;
-                font-size: 0.85rem;
+                width: 72px;
+                height: 72px;
             }
-            #arrow {
-                width: 24px;
-                height: 34px;
+            #reticle {
+                width: 40px;
+                height: 40px;
+            }
+            .playground h1 {
+                font-size: 1.6rem;
+            }
+            .btn {
+                font-size: 0.8rem;
+                padding: 0.5rem 1rem;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- ─── Circle ─── -->
-    <div id="circle">
-        Click
-        <span class="sub">▼ fires at arrow</span>
-    </div>
+    <!-- ─── Circle (trigger) ─── -->
+    <div id="circle"></div>
 
-    <!-- ─── Arrow ─── -->
-    <div id="arrow" class="idle"></div>
+    <!-- ─── Thin Plus + 4px Dot ─── -->
+    <div id="reticle">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="2" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+
+            <!-- ─── 1px thick plus ─── -->
+            <!-- Vertical bar: 1px wide, 16px tall (8px up, 8px down) -->
+            <rect x="23.5" y="8" width="1" height="32" rx="0.5" fill="#00FFD1" filter="url(#glow)" />
+            <!-- Horizontal bar: 1px tall, 16px wide (8px left, 8px right) -->
+            <rect x="8" y="23.5" width="32" height="1" rx="0.5" fill="#00FFD1" filter="url(#glow)" />
+
+            <!-- ─── Subtle glow behind the plus ─── -->
+            <rect x="23" y="7" width="2" height="34" rx="1" fill="rgba(0, 255, 209, 0.08)" />
+            <rect x="7" y="23" width="34" height="2" rx="1" fill="rgba(0, 255, 209, 0.08)" />
+
+            <!-- ─── 4px center dot (radius 2) ─── -->
+            <circle cx="24" cy="24" r="2" fill="#00FFD1" filter="url(#glow)" />
+            <!-- ─── 2px bright core inside the dot ─── -->
+            <circle cx="24" cy="24" r="1" fill="white" />
+
+            <!-- ─── Outer glow ring around the dot ─── -->
+            <circle cx="24" cy="24" r="5" fill="rgba(0, 255, 209, 0.06)" filter="blur(2px)" />
+        </svg>
+    </div>
 
     <!-- ─── Toast ─── -->
     <div id="toast">✨ ready</div>
 
     <!-- ─── Demo content ─── -->
     <div class="playground">
-        <h1>✦ Smart Virtual Mouse</h1>
-        <p>Circle follows your finger.<br />
-        <strong>Arrow</strong> shifts left / center / right based on where you are.<br />
-        Tap the <strong>circle</strong> to click at the arrow's tip.</p>
+        <h1>✦ Virtual Mouse</h1>
+        <p>
+            The <strong>thin plus</strong> (1px) shows the aim point.<br />
+            The <strong>4px dot</strong> marks the exact center &mdash; click fires right there.<br />
+            Tap the <strong>circle</strong> to click.
+        </p>
 
         <div class="demo-grid">
             <button class="btn btn-primary" id="btnA">Button A</button>
@@ -228,7 +306,7 @@
             <button class="btn" id="btnC">Button C</button>
         </div>
 
-        <div id="feedback">✨ tap the circle to click</div>
+        <div id="click-log">✨ tap the circle to interact</div>
     </div>
 
     <script>
@@ -237,20 +315,14 @@
 
             // ─── DOM refs ───
             const circle = document.getElementById('circle');
-            const arrow = document.getElementById('arrow');
+            const reticle = document.getElementById('reticle');
             const toast = document.getElementById('toast');
-            const feedback = document.getElementById('feedback');
+            const log = document.getElementById('click-log');
 
             // ─── state ───
-            let posX = window.innerWidth / 2;
-            let posY = window.innerHeight / 2;
-
-            // ─── smart offset ───
-            const OFFSET_X = 80;   // horizontal distance from circle to arrow tip
-            const OFFSET_Y = 80;   // vertical distance (arrow above circle)
-            const DEAD_ZONE = 0.30; // 30% of screen width on each side = 60% middle zone
-
-            let idleTimer = null;
+            let lastX = window.innerWidth / 2;
+            let lastY = window.innerHeight / 2;
+            const OFFSET_Y = 110; // distance from circle center to reticle center
             let toastTimer = null;
 
             // ─── helpers ───
@@ -261,110 +333,82 @@
                 toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
             }
 
-            function clamp(value, min, max) {
-                return Math.min(Math.max(value, min), max);
+            function updateLog(msg, isHit = true) {
+                log.textContent = msg;
+                if (isHit) {
+                    log.classList.add('hit');
+                    setTimeout(() => log.classList.remove('hit'), 1000);
+                }
             }
 
+            // ─── update cursor positions ───
             function updatePositions(x, y) {
-                posX = x;
-                posY = y;
+                lastX = x;
+                lastY = y;
 
-                // circle follows finger
+                // circle follows finger exactly
                 circle.style.left = x + 'px';
                 circle.style.top = y + 'px';
 
-                // ── smart arrow positioning ──
-                const screenWidth = window.innerWidth;
-                const leftThreshold = screenWidth * DEAD_ZONE;
-                const rightThreshold = screenWidth * (1 - DEAD_ZONE);
-
-                let tipX;
-                if (x < leftThreshold) {
-                    // LEFT side → arrow top‑left
-                    tipX = x - OFFSET_X;
-                } else if (x > rightThreshold) {
-                    // RIGHT side → arrow top‑right
-                    tipX = x + OFFSET_X;
-                } else {
-                    // MIDDLE → arrow directly above
-                    tipX = x;
-                }
-
-                let tipY = y - OFFSET_Y;
-
-                // clamp to screen bounds so arrow doesn't go off‑edge
-                tipX = clamp(tipX, 10, window.innerWidth - 10);
-                tipY = clamp(tipY, 20, window.innerHeight - 20);
-
-                // place arrow's tip (the bottom point of the polygon)
-                arrow.style.left = tipX + 'px';
-                arrow.style.top = tipY + 'px';
-
-                // show and reset idle timer
-                arrow.classList.remove('idle');
-                clearTimeout(idleTimer);
-                idleTimer = setTimeout(() => {
-                    arrow.classList.add('idle');
-                }, 2000);
+                // reticle sits directly above, center at (x, y - OFFSET_Y)
+                reticle.style.left = x + 'px';
+                reticle.style.top = (y - OFFSET_Y) + 'px';
             }
 
-            // ─── fire click at arrow tip ───
-            function fireClickAtArrow() {
-                // get current arrow tip position from DOM
-                const tipX = parseFloat(arrow.style.left);
-                const tipY = parseFloat(arrow.style.top);
+            // ─── perform click at reticle center ───
+            function performClick() {
+                const tipX = lastX;
+                const tipY = lastY - OFFSET_Y;
 
-                // visual feedback on circle
-                circle.style.transform = 'translate(-50%, -50%) scale(0.85)';
+                // 1. visual feedback on circle
+                circle.style.transform = 'translate(-50%, -50%) scale(0.82)';
                 setTimeout(() => {
                     circle.style.transform = 'translate(-50%, -50%) scale(1)';
                 }, 150);
 
-                // hide arrow temporarily for elementFromPoint
-                const wasIdle = arrow.classList.contains('idle');
-                arrow.style.display = 'none';
+                // 2. hide custom cursor to get underlying element
+                const circleDisplay = circle.style.display;
+                const reticleDisplay = reticle.style.display;
+                circle.style.display = 'none';
+                reticle.style.display = 'none';
+
                 const target = document.elementFromPoint(tipX, tipY);
-                arrow.style.display = '';
-                if (!wasIdle) arrow.classList.remove('idle');
+
+                // 3. show custom cursor again
+                circle.style.display = circleDisplay || '';
+                reticle.style.display = reticleDisplay || '';
 
                 if (!target) {
-                    showToast('⚠️ nothing under arrow', 800);
-                    feedback.textContent = '⚠️ nothing to click';
-                    feedback.classList.add('hit');
-                    setTimeout(() => feedback.classList.remove('hit'), 1000);
+                    showToast('⚠️ nothing under reticle', 800);
+                    updateLog('⚠️ no element at center', false);
                     return;
                 }
 
-                // dispatch click events
-                const events = [
-                    new MouseEvent('mousedown', { view: window, bubbles: true, cancelable: true, clientX: tipX,
-                        clientY: tipY, button: 0 }),
-                    new MouseEvent('mouseup', { view: window, bubbles: true, cancelable: true, clientX: tipX,
-                        clientY: tipY, button: 0 }),
-                    new MouseEvent('click', { view: window, bubbles: true, cancelable: true, clientX: tipX,
-                        clientY: tipY, button: 0 })
-                ];
+                // 4. dispatch native click event
+                const ev = new MouseEvent('click', {
+                    view: window,
+                    bubbles: true,
+                    cancelable: true,
+                    clientX: tipX,
+                    clientY: tipY,
+                    button: 0,
+                });
 
-                let fired = false;
-                for (const ev of events) {
-                    const canceled = !target.dispatchEvent(ev);
-                    if (ev.type === 'click' && !canceled) fired = true;
-                }
+                const canceled = !target.dispatchEvent(ev);
 
-                if (fired) {
+                if (!canceled) {
                     const label = target.tagName.toLowerCase() === 'button' ?
                         (target.textContent.trim() || 'button') :
                         (target.id || target.tagName);
                     showToast(`✅ clicked "${label}"`, 1000);
-                    feedback.textContent = `✅ Clicked: ${label}`;
-                    feedback.classList.add('hit');
-                    setTimeout(() => feedback.classList.remove('hit'), 1200);
+                    updateLog(`✅ clicked: ${label}`);
                 } else {
-                    showToast('⚠️ click blocked', 800);
+                    showToast('⚠️ click was blocked', 800);
+                    updateLog('⚠️ click blocked', false);
                 }
             }
 
-            // ─── pointer / touch move ───
+            // ─── pointer event handlers ───
             function handleMove(clientX, clientY) {
                 updatePositions(clientX, clientY);
             }
@@ -385,10 +429,10 @@
                 if (t) handleMove(t.clientX, t.clientY);
             }, { passive: true });
 
-            // ─── Circle click (trigger) ───
+            // ─── Circle triggers ───
             circle.addEventListener('click', (e) => {
                 e.stopPropagation();
-                fireClickAtArrow();
+                performClick();
             });
 
             circle.addEventListener('touchstart', (e) => {
@@ -397,16 +441,15 @@
 
             circle.addEventListener('touchend', (e) => {
                 e.preventDefault();
-                fireClickAtArrow();
+                performClick();
             }, { passive: false });
 
-            // ─── Demo buttons native feedback ───
-            document.querySelectorAll('.btn').forEach(btn => {
+            // ─── Demo buttons (native feedback) ───
+            document.querySelectorAll('.btn').forEach((btn) => {
                 btn.addEventListener('click', (e) => {
-                    feedback.textContent = `✅ Button "${btn.textContent.trim()}" clicked natively!`;
-                    feedback.classList.add('hit');
-                    setTimeout(() => feedback.classList.remove('hit'), 1000);
-                    showToast(`🖱️ ${btn.textContent.trim()}`, 800);
+                    const text = btn.textContent.trim();
+                    updateLog(`✅ native click: ${text}`);
+                    showToast(`🖱️ ${text}`, 800);
                 });
             });
 
@@ -414,15 +457,18 @@
             const cx = window.innerWidth / 2;
             const cy = window.innerHeight / 2;
             updatePositions(cx, cy);
+
             setTimeout(() => {
-                showToast('👆 move · tap circle to click', 1500);
+                showToast('👆 move · tap circle to click', 1800);
             }, 400);
 
             window.addEventListener('resize', () => {
-                updatePositions(posX, posY);
+                const clampedX = Math.min(Math.max(lastX, 50), window.innerWidth - 50);
+                const clampedY = Math.min(Math.max(lastY, 100), window.innerHeight - 50);
+                updatePositions(clampedX, clampedY);
             });
 
-            console.log('🖱️ Smart Virtual Mouse: left / center / right zones');
+            console.log('🖱️ Virtual Mouse: 1px thin plus + 4px dot');
         })();
     </script>
 </body>
