@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Simple Virtual Mouse</title>
+    <title>Virtual Mouse · Wide Offset</title>
     <style>
-        /* ─── reset ─── */
         * {
             margin: 0;
             padding: 0;
@@ -24,7 +23,6 @@
             padding: 1rem;
         }
 
-        /* ─── demo content ─── */
         .playground {
             max-width: 480px;
             width: 100%;
@@ -36,7 +34,6 @@
             border: 1px solid #2a2f42;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
             pointer-events: none;
-            /* let touches pass through to indicator */
         }
 
         .playground h1 {
@@ -61,7 +58,6 @@
             gap: 0.8rem;
             justify-content: center;
             pointer-events: auto;
-            /* buttons are clickable natively too */
         }
 
         .btn {
@@ -85,16 +81,13 @@
             border-color: #6366f1;
             color: #fff;
         }
-        .btn-primary:active {
-            background: #4338ca;
-        }
         .btn-success {
             background: #15803d;
             border-color: #22c55e;
             color: #fff;
         }
 
-        #click-feedback {
+        #feedback {
             margin-top: 1.5rem;
             padding: 0.8rem;
             border-radius: 0.8rem;
@@ -109,42 +102,24 @@
             transition: 0.2s;
             pointer-events: none;
         }
-        #click-feedback.hit {
+        #feedback.hit {
             border-color: #a78bfa;
             color: #c4b5fd;
             background: #1a1e30;
         }
 
-        /* ─── arrow (cursor) ─── */
-        #arrow {
-            position: fixed;
-            width: 32px;
-            height: 44px;
-            background: #a78bfa;
-            clip-path: polygon(50% 0%, 0% 100%, 50% 70%, 100% 100%);
-            filter: drop-shadow(0 4px 16px rgba(167, 139, 250, 0.50));
-            transform: translate(-50%, -100%);
-            pointer-events: none;
-            z-index: 9999;
-            transition: opacity 0.5s ease;
-            will-change: transform;
-        }
-        #arrow.idle {
-            opacity: 0;
-        }
-
-        /* ─── trigger circle ─── */
+        /* ─── Circle (main cursor) ─── */
         #circle {
             position: fixed;
             width: 70px;
             height: 70px;
             border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, #818cf8, #4338ca);
-            border: 2px solid #a5b4fc;
-            box-shadow: 0 8px 40px rgba(79, 70, 229, 0.45);
+            border: 2.5px solid #a5b4fc;
+            box-shadow: 0 8px 40px rgba(79, 70, 229, 0.5);
             color: #fff;
             font-weight: 600;
-            font-size: 1.1rem;
+            font-size: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -152,10 +127,10 @@
             cursor: pointer;
             z-index: 10000;
             touch-action: none;
-            user-select: none;
-            transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s;
-            letter-spacing: 0.5px;
+            transition: transform 0.12s ease, box-shadow 0.15s, border-color 0.15s;
+            letter-spacing: 0.3px;
             will-change: transform;
+            user-select: none;
         }
         #circle:active {
             transform: translate(-50%, -50%) scale(0.88);
@@ -163,13 +138,31 @@
             border-color: #c7d2fe;
         }
         #circle .sub {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             opacity: 0.7;
             display: block;
             margin-top: -2px;
         }
 
-        /* ─── small toast ─── */
+        /* ─── Arrow (target indicator) ─── */
+        #arrow {
+            position: fixed;
+            width: 30px;
+            height: 42px;
+            background: #facc15;
+            clip-path: polygon(50% 0%, 0% 100%, 50% 65%, 100% 100%);
+            filter: drop-shadow(0 4px 16px rgba(250, 204, 21, 0.7));
+            transform: translate(-50%, -100%);
+            pointer-events: none;
+            z-index: 9999;
+            transition: opacity 0.4s ease;
+            will-change: transform;
+        }
+        #arrow.idle {
+            opacity: 0;
+        }
+
+        /* ─── Toast ─── */
         #toast {
             position: fixed;
             bottom: 30px;
@@ -195,38 +188,38 @@
             transform: translateX(-50%) translateY(0);
         }
 
-        /* ─── responsive ─── */
         @media (max-width: 480px) {
-            #arrow {
-                width: 26px;
-                height: 36px;
-            }
             #circle {
                 width: 60px;
                 height: 60px;
-                font-size: 0.9rem;
+                font-size: 0.85rem;
+            }
+            #arrow {
+                width: 24px;
+                height: 34px;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- ─── Arrow ─── -->
-    <div id="arrow" class="idle"></div>
-
-    <!-- ─── Trigger Circle ─── -->
+    <!-- ─── Circle ─── -->
     <div id="circle">
         Click
         <span class="sub">▼ fires at arrow</span>
     </div>
 
+    <!-- ─── Arrow ─── -->
+    <div id="arrow" class="idle"></div>
+
     <!-- ─── Toast ─── -->
-    <div id="toast">✨ click fired</div>
+    <div id="toast">✨ ready</div>
 
     <!-- ─── Demo content ─── -->
     <div class="playground">
         <h1>✦ Virtual Mouse</h1>
-        <p>Move your finger or mouse to aim the arrow.<br />Tap the <strong>circle</strong> to click at the arrow tip.</p>
+        <p>Circle follows your finger. <strong>Arrow</strong> shows where the click will go.<br />
+        Tap the <strong>circle</strong> to click at the arrow's tip.</p>
 
         <div class="demo-grid">
             <button class="btn btn-primary" id="btnA">Button A</button>
@@ -234,46 +227,51 @@
             <button class="btn" id="btnC">Button C</button>
         </div>
 
-        <div id="click-feedback">✨ click any button (or use the circle)</div>
+        <div id="feedback">✨ tap the circle to click</div>
     </div>
 
     <script>
         (function() {
             'use strict';
 
-            // ─── elements ───
-            const arrow = document.getElementById('arrow');
+            // ─── DOM refs ───
             const circle = document.getElementById('circle');
+            const arrow = document.getElementById('arrow');
             const toast = document.getElementById('toast');
-            const feedback = document.getElementById('click-feedback');
+            const feedback = document.getElementById('feedback');
 
             // ─── state ───
             let posX = window.innerWidth / 2;
             let posY = window.innerHeight / 2;
-            const OFFSET_X = 76; // circle offset from arrow tip
-            const OFFSET_Y = 76;
+
+            // ═══ INCREASED OFFSET (distance between circle and arrow tip) ═══
+            const OFFSET_X = 140;   // was 60
+            const OFFSET_Y = 140;   // was 60
+
             let idleTimer = null;
             let toastTimer = null;
 
             // ─── helpers ───
-            function showToast(msg) {
+            function showToast(msg, duration = 1000) {
                 toast.textContent = msg;
                 toast.classList.add('show');
                 clearTimeout(toastTimer);
-                toastTimer = setTimeout(() => toast.classList.remove('show'), 1000);
+                toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
             }
 
             function updatePositions(x, y) {
                 posX = x;
                 posY = y;
 
-                // arrow tip at (x, y)
-                arrow.style.left = x + 'px';
-                arrow.style.top = y + 'px';
+                // circle follows the finger
+                circle.style.left = x + 'px';
+                circle.style.top = y + 'px';
 
-                // circle offset to bottom‑right
-                circle.style.left = (x + OFFSET_X) + 'px';
-                circle.style.top = (y + OFFSET_Y) + 'px';
+                // arrow placed at offset (right & down)
+                const arrowX = x + OFFSET_X;
+                const arrowY = y + OFFSET_Y;
+                arrow.style.left = arrowX + 'px';
+                arrow.style.top = arrowY + 'px';
 
                 // show and reset idle timer
                 arrow.classList.remove('idle');
@@ -285,36 +283,38 @@
 
             // ─── fire click at arrow tip ───
             function fireClickAtArrow() {
-                const x = posX;
-                const y = posY;
+                const tipX = posX + OFFSET_X;
+                const tipY = posY + OFFSET_Y;
 
-                // 1. visual feedback on the circle
-                circle.style.transform = 'translate(-50%, -50%) scale(0.82)';
+                // visual feedback on circle
+                circle.style.transform = 'translate(-50%, -50%) scale(0.85)';
                 setTimeout(() => {
                     circle.style.transform = 'translate(-50%, -50%) scale(1)';
                 }, 150);
 
-                // 2. get the element under the arrow tip
-                // hide arrow temporarily so elementFromPoint sees what's underneath
+                // hide arrow for elementFromPoint
                 const wasIdle = arrow.classList.contains('idle');
                 arrow.style.display = 'none';
-                const target = document.elementFromPoint(x, y);
+                const target = document.elementFromPoint(tipX, tipY);
                 arrow.style.display = '';
                 if (!wasIdle) arrow.classList.remove('idle');
 
                 if (!target) {
-                    showToast('⚠️ nothing under arrow');
+                    showToast('⚠️ nothing under arrow', 800);
+                    feedback.textContent = '⚠️ nothing to click';
+                    feedback.classList.add('hit');
+                    setTimeout(() => feedback.classList.remove('hit'), 1000);
                     return;
                 }
 
-                // 3. dispatch native events (mousedown + mouseup + click)
+                // dispatch click events
                 const events = [
-                    new MouseEvent('mousedown', { view: window, bubbles: true, cancelable: true, clientX: x,
-                        clientY: y, button: 0 }),
-                    new MouseEvent('mouseup', { view: window, bubbles: true, cancelable: true, clientX: x, clientY: y,
-                        button: 0 }),
-                    new MouseEvent('click', { view: window, bubbles: true, cancelable: true, clientX: x, clientY: y,
-                        button: 0 })
+                    new MouseEvent('mousedown', { view: window, bubbles: true, cancelable: true, clientX: tipX,
+                        clientY: tipY, button: 0 }),
+                    new MouseEvent('mouseup', { view: window, bubbles: true, cancelable: true, clientX: tipX,
+                        clientY: tipY, button: 0 }),
+                    new MouseEvent('click', { view: window, bubbles: true, cancelable: true, clientX: tipX,
+                        clientY: tipY, button: 0 })
                 ];
 
                 let fired = false;
@@ -323,17 +323,16 @@
                     if (ev.type === 'click' && !canceled) fired = true;
                 }
 
-                // 4. feedback
                 if (fired) {
-                    const tag = target.tagName.toLowerCase();
-                    const id = target.id || '';
-                    const label = tag === 'button' ? (target.textContent.trim() || 'button') : (id || tag);
-                    showToast(`✅ clicked "${label}"`);
+                    const label = target.tagName.toLowerCase() === 'button' ?
+                        (target.textContent.trim() || 'button') :
+                        (target.id || target.tagName);
+                    showToast(`✅ clicked "${label}"`, 1000);
                     feedback.textContent = `✅ Clicked: ${label}`;
                     feedback.classList.add('hit');
                     setTimeout(() => feedback.classList.remove('hit'), 1200);
                 } else {
-                    showToast('⚠️ click was blocked');
+                    showToast('⚠️ click blocked', 800);
                 }
             }
 
@@ -342,40 +341,30 @@
                 updatePositions(clientX, clientY);
             }
 
-            // ─── mouse events ───
+            // ─── Mouse events ───
             document.addEventListener('mousemove', (e) => {
-                // ignore if over circle, but we still want to update position.
-                // However, if mouse is over circle, we don't want to hide the circle.
-                // We just update.
                 handleMove(e.clientX, e.clientY);
             });
 
-            // ─── touch events ───
+            // ─── Touch events ───
             document.addEventListener('touchmove', (e) => {
                 const t = e.touches[0];
-                if (t) {
-                    handleMove(t.clientX, t.clientY);
-                }
+                if (t) handleMove(t.clientX, t.clientY);
             }, { passive: true });
 
             document.addEventListener('touchstart', (e) => {
                 const t = e.touches[0];
-                if (t) {
-                    handleMove(t.clientX, t.clientY);
-                }
+                if (t) handleMove(t.clientX, t.clientY);
             }, { passive: true });
 
-            // ─── circle click handler ───
+            // ─── Circle click (trigger) ───
             circle.addEventListener('click', (e) => {
-                e.stopPropagation(); // avoid weirdness
+                e.stopPropagation();
                 fireClickAtArrow();
             });
 
-            // ─── also support touch on circle ───
             circle.addEventListener('touchstart', (e) => {
-                e.preventDefault(); // prevent scroll
-                // We'll fire on touchend to avoid double-firing, but let's fire on touchstart for responsiveness.
-                // Better to fire on touchend to match native click behavior.
+                e.preventDefault();
             }, { passive: false });
 
             circle.addEventListener('touchend', (e) => {
@@ -383,28 +372,25 @@
                 fireClickAtArrow();
             }, { passive: false });
 
-            // ─── demo buttons native feedback ───
+            // ─── Demo buttons native feedback ───
             document.querySelectorAll('.btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    // feedback is handled globally, but we add a specific highlight
                     feedback.textContent = `✅ Button "${btn.textContent.trim()}" clicked natively!`;
                     feedback.classList.add('hit');
                     setTimeout(() => feedback.classList.remove('hit'), 1000);
-                    showToast(`🖱️ ${btn.textContent.trim()}`);
+                    showToast(`🖱️ ${btn.textContent.trim()}`, 800);
                 });
             });
 
             // ─── init ───
-            // center the arrow
             const cx = window.innerWidth / 2;
             const cy = window.innerHeight / 2;
             updatePositions(cx, cy);
-            // show a short intro
             setTimeout(() => {
-                showToast('👆 move to aim · tap circle to click');
+                showToast('👆 move · tap circle to click', 1500);
             }, 400);
 
-            console.log('🖱️ Simple Virtual Mouse ready');
+            console.log('🖱️ Virtual Mouse with wide offset (140px)');
         })();
     </script>
 </body>
