@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Virtual Mouse · Pro</title>
+    <title>Simple Virtual Mouse</title>
     <style>
-        /* ─── reset & base ─── */
+        /* ─── reset ─── */
         * {
             margin: 0;
             padding: 0;
@@ -15,22 +15,28 @@
 
         body {
             min-height: 100vh;
-            background: #0b0d15;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0a0c14;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             touch-action: none;
-            padding-bottom: 90px;
-            /* space for toolbar */
             display: flex;
             justify-content: center;
-            align-items: flex-start;
+            align-items: center;
+            padding: 1rem;
         }
 
-        /* ─── main content / test playground ─── */
+        /* ─── demo content ─── */
         .playground {
-            max-width: 640px;
+            max-width: 480px;
             width: 100%;
-            padding: 1.5rem 1.2rem 2rem;
-            color: #eef2ff;
+            color: #e2e8f0;
+            text-align: center;
+            padding: 2rem 1.5rem;
+            background: #121624;
+            border-radius: 2rem;
+            border: 1px solid #2a2f42;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            pointer-events: none;
+            /* let touches pass through to indicator */
         }
 
         .playground h1 {
@@ -41,65 +47,38 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 0.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
 
-        .playground .sub {
+        .playground p {
             color: #94a3b8;
-            margin-bottom: 1.5rem;
             font-size: 0.95rem;
-            border-left: 2px solid #334155;
-            padding-left: 0.75rem;
+            margin-bottom: 1.8rem;
         }
 
-        /* ─── test cards ─── */
-        .grid {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .card {
-            background: #141824;
-            border-radius: 1.2rem;
-            padding: 1.2rem 1.5rem;
-            border: 1px solid #2a2f42;
-            transition: border-color 0.2s;
-        }
-
-        .card label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
-            display: block;
-            margin-bottom: 0.5rem;
-        }
-
-        .row {
+        .demo-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.75rem;
-            align-items: center;
+            gap: 0.8rem;
+            justify-content: center;
+            pointer-events: auto;
+            /* buttons are clickable natively too */
         }
 
         .btn {
             background: #1e2438;
-            border: none;
-            padding: 0.6rem 1.2rem;
+            border: 1px solid #334155;
+            padding: 0.7rem 1.4rem;
             border-radius: 40px;
             color: #e2e8f0;
             font-weight: 500;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             cursor: pointer;
-            border: 1px solid #334155;
             transition: 0.15s;
             pointer-events: auto;
         }
         .btn:active {
-            transform: scale(0.95);
+            transform: scale(0.94);
+            background: #2a3048;
         }
         .btn-primary {
             background: #4f46e5;
@@ -109,341 +88,153 @@
         .btn-primary:active {
             background: #4338ca;
         }
-        .btn-danger {
-            background: #b91c1c;
-            border-color: #dc2626;
-            color: #fff;
-        }
         .btn-success {
             background: #15803d;
             border-color: #22c55e;
             color: #fff;
         }
 
-        #draggable-box {
-            width: 100%;
-            height: 90px;
-            background: linear-gradient(135deg, #312e81, #4f46e5);
+        #click-feedback {
+            margin-top: 1.5rem;
+            padding: 0.8rem;
             border-radius: 0.8rem;
+            background: #0f121d;
+            border: 1px dashed #334155;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            min-height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: 0.2s;
+            pointer-events: none;
+        }
+        #click-feedback.hit {
+            border-color: #a78bfa;
+            color: #c4b5fd;
+            background: #1a1e30;
+        }
+
+        /* ─── arrow (cursor) ─── */
+        #arrow {
+            position: fixed;
+            width: 32px;
+            height: 44px;
+            background: #a78bfa;
+            clip-path: polygon(50% 0%, 0% 100%, 50% 70%, 100% 100%);
+            filter: drop-shadow(0 4px 16px rgba(167, 139, 250, 0.50));
+            transform: translate(-50%, -100%);
+            pointer-events: none;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+            will-change: transform;
+        }
+        #arrow.idle {
+            opacity: 0;
+        }
+
+        /* ─── trigger circle ─── */
+        #circle {
+            position: fixed;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #818cf8, #4338ca);
+            border: 2px solid #a5b4fc;
+            box-shadow: 0 8px 40px rgba(79, 70, 229, 0.45);
+            color: #fff;
             font-weight: 600;
-            color: #c7d2fe;
-            border: 2px dashed #818cf8;
-            transition: background 0.2s, border-color 0.2s;
-            cursor: grab;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            z-index: 10000;
             touch-action: none;
+            user-select: none;
+            transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s;
+            letter-spacing: 0.5px;
+            will-change: transform;
         }
-        #draggable-box.dragging {
-            background: #4f46e5;
-            border-color: #a5b4fc;
-            cursor: grabbing;
+        #circle:active {
+            transform: translate(-50%, -50%) scale(0.88);
+            box-shadow: 0 4px 24px rgba(79, 70, 229, 0.7);
+            border-color: #c7d2fe;
         }
-
-        #scroll-area {
-            height: 110px;
-            overflow-y: auto;
-            background: #0f121d;
-            border-radius: 0.6rem;
-            padding: 0.6rem 1rem;
-            border: 1px solid #2a2f42;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            color: #cbd5e1;
-            scroll-behavior: smooth;
-        }
-        #scroll-area p {
-            margin: 0.3rem 0;
-        }
-        #scroll-area .highlight {
-            color: #a78bfa;
-            font-weight: 500;
+        #circle .sub {
+            font-size: 0.65rem;
+            opacity: 0.7;
+            display: block;
+            margin-top: -2px;
         }
 
-        /* ─── toast ─── */
+        /* ─── small toast ─── */
         #toast {
             position: fixed;
-            top: 20px;
+            bottom: 30px;
             left: 50%;
-            transform: translateX(-50%) translateY(-80px);
+            transform: translateX(-50%) translateY(20px);
             background: #1e2438;
-            padding: 0.5rem 1.4rem;
+            padding: 0.4rem 1.2rem;
             border-radius: 40px;
             border: 1px solid #4f46e5;
             color: #e2e8f0;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 500;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
             opacity: 0;
+            transition: 0.25s ease;
             pointer-events: none;
-            z-index: 10000;
+            z-index: 99999;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
         }
         #toast.show {
-            transform: translateX(-50%) translateY(0);
             opacity: 1;
-        }
-
-        /* ─── cursor indicator ─── */
-        #indicator {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            transform: translate(-50%, -50%);
-            background: radial-gradient(circle at 35% 35%,
-                    rgba(167, 139, 250, 0.55),
-                    rgba(96, 165, 250, 0.30) 60%,
-                    rgba(167, 139, 250, 0.10) 100%);
-            border: 1.5px solid rgba(167, 139, 250, 0.50);
-            box-shadow: 0 0 24px rgba(167, 139, 250, 0.25), inset 0 0 20px rgba(167, 139, 250, 0.10);
-            transition: width 0.2s ease, height 0.2s ease, background 0.25s, border-color 0.25s, opacity 0.5s;
-            will-change: transform;
-        }
-        #indicator::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.60);
-            box-shadow: 0 0 16px rgba(167, 139, 250, 0.50);
-            transition: 0.2s;
-        }
-        #indicator.active {
-            width: 38px;
-            height: 38px;
-            background: radial-gradient(circle at 35% 35%,
-                    rgba(167, 139, 250, 0.75),
-                    rgba(96, 165, 250, 0.45) 60%,
-                    rgba(167, 139, 250, 0.20) 100%);
-            border-color: rgba(167, 139, 250, 0.80);
-            box-shadow: 0 0 40px rgba(167, 139, 250, 0.40);
-        }
-        #indicator.active::after {
-            width: 6px;
-            height: 6px;
-        }
-        #indicator.idle {
-            opacity: 0;
-            transition: opacity 0.6s ease, transform 0.6s ease;
-            transform: translate(-50%, -50%) scale(0.85);
-        }
-        #indicator.drag-mode {
-            border-color: #fbbf24;
-            box-shadow: 0 0 30px rgba(251, 191, 36, 0.35);
-        }
-        #indicator.drag-mode::after {
-            background: #fbbf24;
-            box-shadow: 0 0 20px #fbbf24;
-        }
-
-        /* ─── floating toolbar ─── */
-        #toolbar {
-            position: fixed;
-            bottom: 18px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(18, 22, 36, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid #334155;
-            border-radius: 60px;
-            padding: 0.5rem 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
-            z-index: 10001;
-            transition: opacity 0.3s, transform 0.3s;
-            touch-action: auto;
-        }
-        #toolbar.hidden {
-            opacity: 0;
-            transform: translateX(-50%) translateY(20px);
-            pointer-events: none;
-        }
-        .tool-btn {
-            width: 44px;
-            height: 44px;
-            border-radius: 40px;
-            border: none;
-            background: transparent;
-            color: #cbd5e1;
-            font-size: 1.1rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.15s;
-            touch-action: auto;
-            cursor: pointer;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid transparent;
-        }
-        .tool-btn:active {
-            transform: scale(0.88);
-            background: rgba(255, 255, 255, 0.10);
-        }
-        .tool-btn.active-btn {
-            background: #4f46e5;
-            color: #fff;
-            border-color: #818cf8;
-            box-shadow: 0 0 16px rgba(79, 70, 229, 0.4);
-        }
-        .tool-btn.drag-on {
-            background: #d97706;
-            color: #fff;
-            border-color: #fbbf24;
-            box-shadow: 0 0 16px rgba(251, 191, 36, 0.3);
-        }
-        .tool-btn.mini {
-            font-size: 1.2rem;
-            width: 36px;
-            height: 36px;
-        }
-        .tool-divider {
-            width: 1px;
-            height: 28px;
-            background: #334155;
-            margin: 0 0.15rem;
-        }
-
-        /* toggle restore button */
-        #restore-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: #4f46e5;
-            border: none;
-            color: #fff;
-            font-size: 1.6rem;
-            box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4);
-            z-index: 9999;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            touch-action: auto;
-        }
-        #restore-btn.show {
-            display: flex;
+            transform: translateX(-50%) translateY(0);
         }
 
         /* ─── responsive ─── */
-        @media (max-width: 500px) {
-            #toolbar {
-                padding: 0.4rem 0.5rem;
-                gap: 0.1rem;
-                border-radius: 40px;
+        @media (max-width: 480px) {
+            #arrow {
+                width: 26px;
+                height: 36px;
             }
-            .tool-btn {
-                width: 38px;
-                height: 38px;
+            #circle {
+                width: 60px;
+                height: 60px;
                 font-size: 0.9rem;
-            }
-            .tool-btn.mini {
-                width: 32px;
-                height: 32px;
-                font-size: 1rem;
-            }
-            #indicator {
-                width: 40px;
-                height: 40px;
-            }
-            #indicator::after {
-                width: 8px;
-                height: 8px;
-            }
-            .playground h1 {
-                font-size: 1.6rem;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- ─── Toast ─── -->
-    <div id="toast">✨ ready</div>
+    <!-- ─── Arrow ─── -->
+    <div id="arrow" class="idle"></div>
 
-    <!-- ─── Cursor ─── -->
-    <div id="indicator" class="idle"></div>
-
-    <!-- ─── Restore button (shows when toolbar hidden) ─── -->
-    <button id="restore-btn" aria-label="show toolbar">⌘</button>
-
-    <!-- ─── Toolbar ─── -->
-    <div id="toolbar">
-        <button class="tool-btn" data-action="left" title="Left click">🖱️</button>
-        <button class="tool-btn" data-action="right" title="Right click">🖱️R</button>
-        <button class="tool-btn" data-action="dbl" title="Double click">⏎</button>
-        <div class="tool-divider"></div>
-        <button class="tool-btn" data-action="scroll-up" title="Scroll up">⬆</button>
-        <button class="tool-btn" data-action="scroll-down" title="Scroll down">⬇</button>
-        <div class="tool-divider"></div>
-        <button class="tool-btn" data-action="drag-toggle" id="dragToggle" title="Toggle drag mode">↕</button>
-        <div class="tool-divider"></div>
-        <button class="tool-btn mini" data-action="minimize" title="Hide toolbar">−</button>
+    <!-- ─── Trigger Circle ─── -->
+    <div id="circle">
+        Click
+        <span class="sub">▼ fires at arrow</span>
     </div>
 
-    <!-- ─── Playground ─── -->
+    <!-- ─── Toast ─── -->
+    <div id="toast">✨ click fired</div>
+
+    <!-- ─── Demo content ─── -->
     <div class="playground">
         <h1>✦ Virtual Mouse</h1>
-        <div class="sub">Tap & drag to move · buttons to click · drag mode to grab</div>
+        <p>Move your finger or mouse to aim the arrow.<br />Tap the <strong>circle</strong> to click at the arrow tip.</p>
 
-        <div class="grid">
-            <!-- click test -->
-            <div class="card">
-                <label>🖱️ click test</label>
-                <div class="row">
-                    <button class="btn btn-primary" id="testClick">click me</button>
-                    <button class="btn btn-danger" id="testRight">right‑click me</button>
-                    <button class="btn btn-success" id="testDbl">double‑click</button>
-                </div>
-            </div>
-
-            <!-- draggable -->
-            <div class="card">
-                <label>✋ drag test <span style="color:#94a3b8;font-weight:400;">(toggle drag mode)</span></label>
-                <div id="draggable-box">⬡ drag me</div>
-            </div>
-
-            <!-- scroll -->
-            <div class="card">
-                <label>📜 scroll test <span style="color:#94a3b8;font-weight:400;">(hover & use ⬆⬇)</span></label>
-                <div id="scroll-area">
-                    <p><span class="highlight">▸</span> Line 1 · scroll to see more</p>
-                    <p><span class="highlight">▸</span> Line 2 · virtual mouse works</p>
-                    <p><span class="highlight">▸</span> Line 3 · with buttons or touch</p>
-                    <p><span class="highlight">▸</span> Line 4 · try scrolling now</p>
-                    <p><span class="highlight">▸</span> Line 5 · smooth as silk</p>
-                    <p><span class="highlight">▸</span> Line 6 · 🎯 done</p>
-                </div>
-            </div>
-
-            <div class="card" style="border-color:#33415540;">
-                <label>💡 gesture hints</label>
-                <div style="font-size:0.85rem;color:#94a3b8;display:flex;flex-wrap:wrap;gap:0.5rem 1.2rem;">
-                    <span>👆 tap → left click</span>
-                    <span>👆 hold (0.5s) → right click</span>
-                    <span>👆👆 double tap → double click</span>
-                    <span>↕ drag mode → drag & drop</span>
-                </div>
-            </div>
+        <div class="demo-grid">
+            <button class="btn btn-primary" id="btnA">Button A</button>
+            <button class="btn btn-success" id="btnB">Button B</button>
+            <button class="btn" id="btnC">Button C</button>
         </div>
+
+        <div id="click-feedback">✨ click any button (or use the circle)</div>
     </div>
 
     <script>
@@ -451,383 +242,169 @@
             'use strict';
 
             // ─── elements ───
-            const indicator = document.getElementById('indicator');
+            const arrow = document.getElementById('arrow');
+            const circle = document.getElementById('circle');
             const toast = document.getElementById('toast');
-            const toolbar = document.getElementById('toolbar');
-            const restoreBtn = document.getElementById('restore-btn');
-            const dragToggle = document.getElementById('dragToggle');
+            const feedback = document.getElementById('click-feedback');
 
-            // ─── cursor state ───
-            const cursor = {
-                x: window.innerWidth / 2,
-                y: window.innerHeight / 2
-            };
-
-            let dragMode = false;
-            let isPointerDown = false; // for drag mode
+            // ─── state ───
+            let posX = window.innerWidth / 2;
+            let posY = window.innerHeight / 2;
+            const OFFSET_X = 76; // circle offset from arrow tip
+            const OFFSET_Y = 76;
+            let idleTimer = null;
             let toastTimer = null;
 
-            // ─── gesture state ───
-            let touchStartTime = 0;
-            let touchStartX = 0,
-                touchStartY = 0;
-            let lastTapTime = 0;
-            let longPressTimer = null;
-            let isLongPressTriggered = false;
-
             // ─── helpers ───
-            function showToast(msg, duration = 1200) {
+            function showToast(msg) {
                 toast.textContent = msg;
                 toast.classList.add('show');
                 clearTimeout(toastTimer);
-                toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
+                toastTimer = setTimeout(() => toast.classList.remove('show'), 1000);
             }
 
-            function moveIndicator(x, y) {
-                cursor.x = x;
-                cursor.y = y;
-                indicator.style.left = x + 'px';
-                indicator.style.top = y + 'px';
+            function updatePositions(x, y) {
+                posX = x;
+                posY = y;
+
+                // arrow tip at (x, y)
+                arrow.style.left = x + 'px';
+                arrow.style.top = y + 'px';
+
+                // circle offset to bottom‑right
+                circle.style.left = (x + OFFSET_X) + 'px';
+                circle.style.top = (y + OFFSET_Y) + 'px';
+
+                // show and reset idle timer
+                arrow.classList.remove('idle');
+                clearTimeout(idleTimer);
+                idleTimer = setTimeout(() => {
+                    arrow.classList.add('idle');
+                }, 2000);
             }
 
-            function showIndicator() {
-                indicator.classList.remove('idle');
-                clearTimeout(indicator._idleTimer);
-            }
+            // ─── fire click at arrow tip ───
+            function fireClickAtArrow() {
+                const x = posX;
+                const y = posY;
 
-            function scheduleIdle() {
-                clearTimeout(indicator._idleTimer);
-                indicator._idleTimer = setTimeout(() => {
-                    if (!isPointerDown) indicator.classList.add('idle');
-                }, 1500);
-            }
+                // 1. visual feedback on the circle
+                circle.style.transform = 'translate(-50%, -50%) scale(0.82)';
+                setTimeout(() => {
+                    circle.style.transform = 'translate(-50%, -50%) scale(1)';
+                }, 150);
 
-            function setActive(state) {
-                indicator.classList.toggle('active', state);
-                isPointerDown = state;
-                if (state) {
-                    showIndicator();
+                // 2. get the element under the arrow tip
+                // hide arrow temporarily so elementFromPoint sees what's underneath
+                const wasIdle = arrow.classList.contains('idle');
+                arrow.style.display = 'none';
+                const target = document.elementFromPoint(x, y);
+                arrow.style.display = '';
+                if (!wasIdle) arrow.classList.remove('idle');
+
+                if (!target) {
+                    showToast('⚠️ nothing under arrow');
+                    return;
+                }
+
+                // 3. dispatch native events (mousedown + mouseup + click)
+                const events = [
+                    new MouseEvent('mousedown', { view: window, bubbles: true, cancelable: true, clientX: x,
+                        clientY: y, button: 0 }),
+                    new MouseEvent('mouseup', { view: window, bubbles: true, cancelable: true, clientX: x, clientY: y,
+                        button: 0 }),
+                    new MouseEvent('click', { view: window, bubbles: true, cancelable: true, clientX: x, clientY: y,
+                        button: 0 })
+                ];
+
+                let fired = false;
+                for (const ev of events) {
+                    const canceled = !target.dispatchEvent(ev);
+                    if (ev.type === 'click' && !canceled) fired = true;
+                }
+
+                // 4. feedback
+                if (fired) {
+                    const tag = target.tagName.toLowerCase();
+                    const id = target.id || '';
+                    const label = tag === 'button' ? (target.textContent.trim() || 'button') : (id || tag);
+                    showToast(`✅ clicked "${label}"`);
+                    feedback.textContent = `✅ Clicked: ${label}`;
+                    feedback.classList.add('hit');
+                    setTimeout(() => feedback.classList.remove('hit'), 1200);
                 } else {
-                    scheduleIdle();
+                    showToast('⚠️ click was blocked');
                 }
             }
 
-            function updateDragModeUI() {
-                indicator.classList.toggle('drag-mode', dragMode);
-                dragToggle.classList.toggle('drag-on', dragMode);
-                dragToggle.textContent = dragMode ? '↕✓' : '↕';
-                showToast(dragMode ? '🔄 Drag mode ON' : '🔄 Drag mode OFF', 800);
+            // ─── pointer / touch move ───
+            function handleMove(clientX, clientY) {
+                updatePositions(clientX, clientY);
             }
 
-            // ─── event dispatchers ───
-            function getTarget(x, y) {
-                // temporarily hide indicator to get element under cursor
-                const wasIdle = indicator.classList.contains('idle');
-                const wasActive = indicator.classList.contains('active');
-                indicator.style.pointerEvents = 'none';
-                indicator.style.display = 'none';
-                const el = document.elementFromPoint(x, y);
-                indicator.style.display = '';
-                indicator.style.pointerEvents = 'none';
-                if (!wasIdle) indicator.classList.remove('idle');
-                if (wasActive) indicator.classList.add('active');
-                return el;
-            }
-
-            function dispatchMouse(type, x, y, button = 0, buttons = 1) {
-                const target = getTarget(x, y);
-                if (!target) return false;
-                const ev = new MouseEvent(type, {
-                    view: window,
-                    bubbles: true,
-                    cancelable: true,
-                    clientX: x,
-                    clientY: y,
-                    button,
-                    buttons,
-                    composed: true
-                });
-                const canceled = !target.dispatchEvent(ev);
-                // feedback
-                const label = type === 'click' ? '🖱️ click' :
-                    type === 'contextmenu' ? '🖱️ right' :
-                    type === 'dblclick' ? '⏎ double' :
-                    type === 'mousedown' ? '🔽 down' :
-                    type === 'mouseup' ? '🔼 up' : type;
-                if (type === 'click' || type === 'contextmenu' || type === 'dblclick') {
-                    showToast(`${label} @ ${Math.round(x)},${Math.round(y)}`, 600);
-                }
-                return !canceled;
-            }
-
-            function dispatchWheel(x, y, deltaY) {
-                const target = getTarget(x, y);
-                if (!target) return false;
-                const ev = new WheelEvent('wheel', {
-                    view: window,
-                    bubbles: true,
-                    cancelable: true,
-                    clientX: x,
-                    clientY: y,
-                    deltaY: deltaY,
-                    deltaMode: 0,
-                    composed: true
-                });
-                target.dispatchEvent(ev);
-                showToast(`📜 scroll ${deltaY > 0 ? 'down' : 'up'}`, 500);
-                return true;
-            }
-
-            // ─── toolbar actions ───
-            function handleToolAction(action) {
-                const x = cursor.x,
-                    y = cursor.y;
-                showIndicator();
-                switch (action) {
-                    case 'left':
-                        dispatchMouse('click', x, y);
-                        break;
-                    case 'right':
-                        dispatchMouse('contextmenu', x, y);
-                        break;
-                    case 'dbl':
-                        dispatchMouse('dblclick', x, y);
-                        break;
-                    case 'scroll-up':
-                        dispatchWheel(x, y, -50);
-                        break;
-                    case 'scroll-down':
-                        dispatchWheel(x, y, 50);
-                        break;
-                    case 'drag-toggle':
-                        dragMode = !dragMode;
-                        updateDragModeUI();
-                        break;
-                    case 'minimize':
-                        toolbar.classList.add('hidden');
-                        restoreBtn.classList.add('show');
-                        showToast('⌘ toolbar hidden', 600);
-                        break;
-                    default:
-                        break;
-                }
-                scheduleIdle();
-            }
-
-            // ─── touch / pointer handlers ───
-            function handlePointerDown(clientX, clientY) {
-                showIndicator();
-                moveIndicator(clientX, clientY);
-                touchStartTime = performance.now();
-                touchStartX = clientX;
-                touchStartY = clientY;
-                isLongPressTriggered = false;
-
-                if (dragMode) {
-                    // start drag: mousedown
-                    setActive(true);
-                    dispatchMouse('mousedown', clientX, clientY, 0, 1);
-                    // clear any idle
-                    clearTimeout(indicator._idleTimer);
-                } else {
-                    setActive(true);
-                    // start long press timer
-                    clearTimeout(longPressTimer);
-                    longPressTimer = setTimeout(() => {
-                        // if finger hasn't moved much
-                        const dx = cursor.x - touchStartX;
-                        const dy = cursor.y - touchStartY;
-                        if (Math.abs(dx) < 12 && Math.abs(dy) < 12) {
-                            isLongPressTriggered = true;
-                            dispatchMouse('contextmenu', cursor.x, cursor.y);
-                            showToast('🖱️ right (long press)', 700);
-                        }
-                        clearTimeout(longPressTimer);
-                    }, 500);
-                }
-            }
-
-            function handlePointerMove(clientX, clientY) {
-                moveIndicator(clientX, clientY);
-                showIndicator();
-
-                if (dragMode && isPointerDown) {
-                    // mousemove while dragging
-                    dispatchMouse('mousemove', clientX, clientY, 0, 1);
-                }
-                // reset idle timer
-                scheduleIdle();
-            }
-
-            function handlePointerUp(clientX, clientY) {
-                setActive(false);
-
-                if (dragMode && isPointerDown) {
-                    dispatchMouse('mouseup', clientX, clientY, 0, 0);
-                    // also reset any drag state
-                }
-
-                if (!dragMode && !isLongPressTriggered) {
-                    // check if it was a tap or double tap
-                    const dt = performance.now() - touchStartTime;
-                    const dx = cursor.x - touchStartX;
-                    const dy = cursor.y - touchStartY;
-                    if (dt < 300 && Math.abs(dx) < 12 && Math.abs(dy) < 12) {
-                        // tap
-                        const now = performance.now();
-                        if (now - lastTapTime < 350) {
-                            // double tap
-                            dispatchMouse('dblclick', cursor.x, cursor.y);
-                            showToast('⏎ double tap', 600);
-                            lastTapTime = 0;
-                        } else {
-                            // single tap -> left click
-                            dispatchMouse('click', cursor.x, cursor.y);
-                            lastTapTime = now;
-                        }
-                    } else {
-                        // moved -> just a drag (no click)
-                        lastTapTime = 0;
-                    }
-                }
-
-                clearTimeout(longPressTimer);
-                isLongPressTriggered = false;
-                scheduleIdle();
-            }
-
-            // ─── mouse events (desktop fallback) ───
+            // ─── mouse events ───
             document.addEventListener('mousemove', (e) => {
-                // ignore if over toolbar
-                if (e.target.closest && e.target.closest('#toolbar')) return;
-                handlePointerMove(e.clientX, e.clientY);
-            });
-
-            document.addEventListener('mousedown', (e) => {
-                if (e.target.closest && e.target.closest('#toolbar')) return;
-                if (e.button === 0) {
-                    handlePointerDown(e.clientX, e.clientY);
-                }
-            });
-
-            document.addEventListener('mouseup', (e) => {
-                if (e.target.closest && e.target.closest('#toolbar')) return;
-                if (e.button === 0 && isPointerDown) {
-                    handlePointerUp(e.clientX, e.clientY);
-                }
-            });
-
-            document.addEventListener('mouseleave', () => {
-                setActive(false);
-                indicator.classList.add('idle');
-                clearTimeout(longPressTimer);
+                // ignore if over circle, but we still want to update position.
+                // However, if mouse is over circle, we don't want to hide the circle.
+                // We just update.
+                handleMove(e.clientX, e.clientY);
             });
 
             // ─── touch events ───
-            document.addEventListener('touchstart', (e) => {
-                if (e.target.closest && e.target.closest('#toolbar')) return;
+            document.addEventListener('touchmove', (e) => {
                 const t = e.touches[0];
                 if (t) {
-                    handlePointerDown(t.clientX, t.clientY);
+                    handleMove(t.clientX, t.clientY);
                 }
             }, { passive: true });
 
-            document.addEventListener('touchmove', (e) => {
-                if (e.target.closest && e.target.closest('#toolbar')) return;
+            document.addEventListener('touchstart', (e) => {
                 const t = e.touches[0];
                 if (t) {
-                    // prevent scroll if drag mode
-                    if (dragMode) e.preventDefault();
-                    handlePointerMove(t.clientX, t.clientY);
+                    handleMove(t.clientX, t.clientY);
                 }
+            }, { passive: true });
+
+            // ─── circle click handler ───
+            circle.addEventListener('click', (e) => {
+                e.stopPropagation(); // avoid weirdness
+                fireClickAtArrow();
+            });
+
+            // ─── also support touch on circle ───
+            circle.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // prevent scroll
+                // We'll fire on touchend to avoid double-firing, but let's fire on touchstart for responsiveness.
+                // Better to fire on touchend to match native click behavior.
             }, { passive: false });
 
-            document.addEventListener('touchend', (e) => {
-                if (e.target.closest && e.target.closest('#toolbar')) return;
-                // use last known cursor position
-                handlePointerUp(cursor.x, cursor.y);
-            }, { passive: true });
-
-            document.addEventListener('touchcancel', () => {
-                setActive(false);
-                clearTimeout(longPressTimer);
-                scheduleIdle();
-            }, { passive: true });
-
-            // ─── toolbar click events ───
-            toolbar.addEventListener('click', (e) => {
-                const btn = e.target.closest('.tool-btn');
-                if (!btn) return;
-                const action = btn.dataset.action;
-                if (action) {
-                    e.stopPropagation();
-                    handleToolAction(action);
-                }
-            });
-
-            // restore button
-            restoreBtn.addEventListener('click', () => {
-                toolbar.classList.remove('hidden');
-                restoreBtn.classList.remove('show');
-                showToast('⌘ toolbar restored', 600);
-            });
-
-            // ─── test buttons (native click handlers to show feedback) ───
-            document.getElementById('testClick').addEventListener('click', () => {
-                showToast('✅ left click detected!', 800);
-            });
-            document.getElementById('testRight').addEventListener('contextmenu', (e) => {
+            circle.addEventListener('touchend', (e) => {
                 e.preventDefault();
-                showToast('✅ right click detected!', 800);
-            });
-            document.getElementById('testDbl').addEventListener('dblclick', () => {
-                showToast('✅ double click detected!', 800);
-            });
+                fireClickAtArrow();
+            }, { passive: false });
 
-            // draggable box native support
-            const box = document.getElementById('draggable-box');
-            let boxOffsetX = 0,
-                boxOffsetY = 0;
-            let boxDragging = false;
-
-            box.addEventListener('mousedown', (e) => {
-                if (!dragMode) return;
-                const rect = box.getBoundingClientRect();
-                boxOffsetX = e.clientX - rect.left;
-                boxOffsetY = e.clientY - rect.top;
-                boxDragging = true;
-                box.classList.add('dragging');
+            // ─── demo buttons native feedback ───
+            document.querySelectorAll('.btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // feedback is handled globally, but we add a specific highlight
+                    feedback.textContent = `✅ Button "${btn.textContent.trim()}" clicked natively!`;
+                    feedback.classList.add('hit');
+                    setTimeout(() => feedback.classList.remove('hit'), 1000);
+                    showToast(`🖱️ ${btn.textContent.trim()}`);
+                });
             });
-
-            document.addEventListener('mousemove', (e) => {
-                if (!boxDragging || !dragMode) return;
-                const x = e.clientX - boxOffsetX;
-                const y = e.clientY - boxOffsetY;
-                box.style.transform = `translate(${x}px, ${y}px)`;
-            });
-
-            document.addEventListener('mouseup', () => {
-                if (boxDragging) {
-                    boxDragging = false;
-                    box.classList.remove('dragging');
-                }
-            });
-
-            // touch drag for box (passthrough from virtual mouse)
-            // the virtual mouse already dispatches mousedown/mousemove/mouseup, which trigger above.
 
             // ─── init ───
-            // show cursor at center
-            const cx = window.innerWidth / 2,
-                cy = window.innerHeight / 2;
-            moveIndicator(cx, cy);
-            indicator.classList.remove('idle');
-            setTimeout(() => scheduleIdle(), 600);
+            // center the arrow
+            const cx = window.innerWidth / 2;
+            const cy = window.innerHeight / 2;
+            updatePositions(cx, cy);
+            // show a short intro
+            setTimeout(() => {
+                showToast('👆 move to aim · tap circle to click');
+            }, 400);
 
-            // drag mode off by default
-            updateDragModeUI();
-
-            console.log('🖱️ Virtual Mouse ready');
+            console.log('🖱️ Simple Virtual Mouse ready');
         })();
     </script>
 </body>
