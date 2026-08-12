@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Virtual Mouse · Wide Offset</title>
+    <title>Smart Virtual Mouse · Center Zone</title>
     <style>
         * {
             margin: 0;
@@ -217,8 +217,9 @@
 
     <!-- ─── Demo content ─── -->
     <div class="playground">
-        <h1>✦ Virtual Mouse</h1>
-        <p>Circle follows your finger. <strong>Arrow</strong> shows where the click will go.<br />
+        <h1>✦ Smart Virtual Mouse</h1>
+        <p>Circle follows your finger.<br />
+        <strong>Arrow</strong> shifts left / center / right based on where you are.<br />
         Tap the <strong>circle</strong> to click at the arrow's tip.</p>
 
         <div class="demo-grid">
@@ -244,9 +245,10 @@
             let posX = window.innerWidth / 2;
             let posY = window.innerHeight / 2;
 
-            // ═══ INCREASED OFFSET (distance between circle and arrow tip) ═══
-            const OFFSET_X = 140;   // was 60
-            const OFFSET_Y = 140;   // was 60
+            // ─── smart offset ───
+            const OFFSET_X = 80;   // horizontal distance from circle to arrow tip
+            const OFFSET_Y = 80;   // vertical distance (arrow above circle)
+            const DEAD_ZONE = 0.30; // 30% of screen width on each side = 60% middle zone
 
             let idleTimer = null;
             let toastTimer = null;
@@ -259,19 +261,44 @@
                 toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
             }
 
+            function clamp(value, min, max) {
+                return Math.min(Math.max(value, min), max);
+            }
+
             function updatePositions(x, y) {
                 posX = x;
                 posY = y;
 
-                // circle follows the finger
+                // circle follows finger
                 circle.style.left = x + 'px';
                 circle.style.top = y + 'px';
 
-                // arrow placed at offset (right & down)
-                const arrowX = x + OFFSET_X;
-                const arrowY = y + OFFSET_Y;
-                arrow.style.left = arrowX + 'px';
-                arrow.style.top = arrowY + 'px';
+                // ── smart arrow positioning ──
+                const screenWidth = window.innerWidth;
+                const leftThreshold = screenWidth * DEAD_ZONE;
+                const rightThreshold = screenWidth * (1 - DEAD_ZONE);
+
+                let tipX;
+                if (x < leftThreshold) {
+                    // LEFT side → arrow top‑left
+                    tipX = x - OFFSET_X;
+                } else if (x > rightThreshold) {
+                    // RIGHT side → arrow top‑right
+                    tipX = x + OFFSET_X;
+                } else {
+                    // MIDDLE → arrow directly above
+                    tipX = x;
+                }
+
+                let tipY = y - OFFSET_Y;
+
+                // clamp to screen bounds so arrow doesn't go off‑edge
+                tipX = clamp(tipX, 10, window.innerWidth - 10);
+                tipY = clamp(tipY, 20, window.innerHeight - 20);
+
+                // place arrow's tip (the bottom point of the polygon)
+                arrow.style.left = tipX + 'px';
+                arrow.style.top = tipY + 'px';
 
                 // show and reset idle timer
                 arrow.classList.remove('idle');
@@ -283,8 +310,9 @@
 
             // ─── fire click at arrow tip ───
             function fireClickAtArrow() {
-                const tipX = posX + OFFSET_X;
-                const tipY = posY + OFFSET_Y;
+                // get current arrow tip position from DOM
+                const tipX = parseFloat(arrow.style.left);
+                const tipY = parseFloat(arrow.style.top);
 
                 // visual feedback on circle
                 circle.style.transform = 'translate(-50%, -50%) scale(0.85)';
@@ -292,7 +320,7 @@
                     circle.style.transform = 'translate(-50%, -50%) scale(1)';
                 }, 150);
 
-                // hide arrow for elementFromPoint
+                // hide arrow temporarily for elementFromPoint
                 const wasIdle = arrow.classList.contains('idle');
                 arrow.style.display = 'none';
                 const target = document.elementFromPoint(tipX, tipY);
@@ -390,7 +418,11 @@
                 showToast('👆 move · tap circle to click', 1500);
             }, 400);
 
-            console.log('🖱️ Virtual Mouse with wide offset (140px)');
+            window.addEventListener('resize', () => {
+                updatePositions(posX, posY);
+            });
+
+            console.log('🖱️ Smart Virtual Mouse: left / center / right zones');
         })();
     </script>
 </body>
