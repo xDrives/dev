@@ -1,0 +1,3073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Electrical Diagram Planner — Zoom Fix</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #e8ecf1;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+            touch-action: none;
+        }
+        .topbar {
+            background: #1e293b;
+            color: #f1f5f9;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            flex-wrap: wrap;
+            gap: 3px;
+            min-height: 44px;
+        }
+        .topbar h1 {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+        .topbar h1 span {
+            color: #94a3b8;
+            font-weight: 400;
+            font-size: 11px;
+        }
+        .topbar-actions {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .topbar-actions button {
+            background: #334155;
+            border: none;
+            color: #f1f5f9;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s;
+            touch-action: manipulation;
+            min-height: 32px;
+        }
+        .topbar-actions button:hover {
+            background: #475569;
+        }
+        .topbar-actions button.danger {
+            background: #7f1d1d;
+        }
+        .topbar-actions button.danger:hover {
+            background: #991b1b;
+        }
+        .topbar-actions button.active {
+            background: #e07b4c;
+            color: #fff;
+        }
+        .topbar-actions button.move-active {
+            background: #4a90d9;
+            color: #fff;
+        }
+        .topbar-actions button.delete-active {
+            background: #ef4444;
+            color: #fff;
+        }
+        .app {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        .palette {
+            width: 140px;
+            background: #f8fafc;
+            border-right: 1px solid #d1d5db;
+            padding: 8px 4px;
+            overflow-y: auto;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .palette-label {
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            padding: 3px 4px;
+        }
+        .palette-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.15s;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            font-size: 10px;
+            font-weight: 500;
+            color: #0f172a;
+            touch-action: manipulation;
+        }
+        .palette-item:hover {
+            background: #eef2ff;
+            border-color: #818cf8;
+        }
+        .palette-item svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            display: block;
+        }
+        .palette-item .pname {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 9px;
+        }
+        .canvas-wrap {
+            flex: 1;
+            position: relative;
+            background: #ffffff;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 20px 20px, #d1d5db 1px, transparent 1px);
+            background-size: 40px 40px;
+            cursor: default;
+            touch-action: none;
+        }
+        #wireCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 0;
+            display: block;
+            touch-action: none;
+        }
+        .c-node {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: grab;
+            touch-action: none;
+            transition: filter 0.15s;
+            z-index: 1;
+            pointer-events: auto;
+            will-change: transform;
+            transform-origin: 0 0;
+        }
+        .c-node:hover {
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.12));
+            z-index: 3;
+        }
+        .c-node.dragging {
+            cursor: grabbing;
+            z-index: 100;
+            filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.25));
+        }
+        .c-node .node-svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .c-node .terminal {
+            fill: #2563eb;
+            stroke: #fff;
+            stroke-width: 2;
+            cursor: crosshair;
+            transition: r 0.15s, fill 0.15s;
+            r: 9;
+            pointer-events: all;
+        }
+        .c-node .terminal:hover {
+            fill: #dc2626;
+            r: 12;
+        }
+        .c-node .terminal.active {
+            fill: #16a34a;
+            r: 12;
+            stroke: #16a34a;
+            stroke-width: 3;
+        }
+        .c-node .delete-btn {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 18px;
+            height: 18px;
+            background: #ef4444;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 14px;
+            text-align: center;
+            cursor: pointer;
+            display: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.15s;
+            z-index: 10;
+            pointer-events: all;
+            touch-action: manipulation;
+        }
+        .c-node:hover .delete-btn {
+            display: block;
+        }
+        .c-node .delete-btn:hover {
+            transform: scale(1.2);
+            background: #b91c1c;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0f172a;
+            color: #f1f5f9;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 90%;
+            text-align: center;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .palette::-webkit-scrollbar {
+            width: 3px;
+        }
+        .palette::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .palette::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        @media (max-width: 600px) {
+            .palette {
+                width: 52px;
+                padding: 4px 2px;
+            }
+            .palette-item .pname {
+                display: none;
+            }
+            .palette-item {
+                justify-content: center;
+                padding: 3px;
+            }
+            .palette-item svg {
+                width: 28px;
+                height: 28px;
+            }
+            .topbar h1 {
+                font-size: 11px;
+            }
+            .topbar h1 span {
+                display: none;
+            }
+            .topbar-actions button {
+                font-size: 9px;
+                padding: 2px 6px;
+                min-height: 28px;
+            }
+        }
+        .breaker-body {
+            fill: #fff;
+            stroke: #111;
+            stroke-width: 1;
+            stroke-linejoin: round;
+            stroke-linecap: round;
+        }
+        .fill-stroke {
+            fill: #fff;
+            stroke: #111;
+            stroke-width: 1;
+            stroke-linejoin: round;
+            stroke-linecap: round;
+        }
+        .screw-circle {
+            fill: #fff;
+            stroke: #111;
+            stroke-width: 1;
+            stroke-linejoin: round;
+            stroke-linecap: round;
+        }
+        .screw-cross {
+            stroke: #111;
+            stroke-width: 1;
+            stroke-linecap: round;
+        }
+        .label {
+            fill: #8d8a8abe;
+            font-size: 12px;
+            font-weight: 800;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            letter-spacing: -0.5px;
+            user-select: none;
+        }
+        .info-panel {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
+            border-radius: 10px;
+            padding: 8px 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            font-size: 0.65rem;
+            max-width: 180px;
+            border: 1px solid #ddd8d0;
+            z-index: 10;
+            pointer-events: none;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .info-title {
+            font-weight: 700;
+            font-size: 0.75rem;
+            margin-bottom: 3px;
+            color: #e07b4c;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1px;
+            gap: 8px;
+        }
+        .info-label {
+            color: #5c5c5c;
+        }
+        .info-value {
+            font-weight: 600;
+        }
+        .zoom-controls {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 5;
+        }
+        .zoom-controls button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ddd;
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+            cursor: pointer;
+            touch-action: manipulation;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s;
+        }
+        .zoom-controls button:active {
+            transform: scale(0.92);
+        }
+        .zoom-indicator {
+            position: absolute;
+            left: 12px;
+            bottom: 16px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            padding: 3px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .align-guide {
+            stroke: #ff8800;
+            stroke-width: 2;
+            stroke-dasharray: 6, 4;
+        }
+        .align-point {
+            fill: #ff8800;
+            stroke: #fff;
+            stroke-width: 2;
+        }
+        .align-glow {
+            fill: rgba(255, 136, 0, 0.15);
+            stroke: none;
+        }
+        .junction-marker {
+            fill: #e07b4c;
+            stroke: #fff;
+            stroke-width: 3;
+            cursor: pointer;
+        }
+        .junction-marker:hover {
+            fill: #dc2626;
+            r: 11;
+        }
+        .wp-label {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-weight: 700;
+            font-size: 11px;
+            fill: #fff;
+            text-anchor: middle;
+            dominant-baseline: central;
+            pointer-events: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="topbar">
+        <h1>⚡ Diagram <span>Planner</span></h1>
+        <div class="topbar-actions">
+            <button id="btnWire" class="active">🔗 Wire</button>
+            <button id="btnMove" class="move-active">✋ Move</button>
+            <button id="btnDelete">🗑️ Del</button>
+            <button id="btnClear" class="danger">🗑️ Clear</button>
+            <button id="btnExport">📥 Export</button>
+        </div>
+    </header>
+
+    <div class="app">
+        <aside class="palette" id="palette">
+            <div class="palette-label">Components</div>
+        </aside>
+        <div class="canvas-wrap" id="canvasWrap">
+            <canvas id="wireCanvas"></canvas>
+            <div class="info-panel" id="infoPanel">
+                <div class="info-title">📊 Info</div>
+                <div id="infoContent">Pinch to zoom · Two-finger pan</div>
+            </div>
+            <div class="zoom-controls">
+                <button id="zoomIn">+</button>
+                <button id="zoomOut">−</button>
+                <button id="zoomReset" style="font-size:14px;">⟲</button>
+            </div>
+            <div class="zoom-indicator" id="zoomIndicator">100%</div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  COMPONENT DEFINITIONS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        const COMP_TYPES = {
+            mcb: {
+                id: 'mcb',
+                name: 'MCB',
+                width: 64,
+                height: 240,
+                terminals: { top: { x: 32, y: 16 }, bottom: { x: 32, y: 224 } },
+                svg: `
+              <rect class="breaker-body" x="0" y="0" width="64" height="32" rx="5"/>
+              <circle class="screw-circle" cx="32" cy="16" r="10"/>
+              <line class="screw-cross" x1="24" y1="16" x2="40" y2="16"/>
+              <line class="screw-cross" x1="32" y1="8" x2="32" y2="24"/>
+              <rect class="breaker-body" x="0" y="40" width="64" height="160" rx="5"/>
+              <rect class="breaker-body" x="12" y="108" width="40" height="24" rx="4"/>
+              <rect class="fill-stroke" x="16" y="112" width="32" height="32" rx="3"/>
+              <text class="label" x="32" y="128">OFF</text>
+              <rect class="fill-stroke" x="12" y="140" width="40" height="16" rx="3"/>
+              <rect class="breaker-body" x="0" y="208" width="64" height="32" rx="5"/>
+              <circle class="screw-circle" cx="32" cy="224" r="10"/>
+              <line class="screw-cross" x1="24" y1="224" x2="40" y2="224"/>
+              <line class="screw-cross" x1="32" y1="216" x2="32" y2="232"/>
+            `
+            },
+            dp_mcb: {
+                id: 'dp_mcb',
+                name: 'DP MCB',
+                width: 128,
+                height: 240,
+                terminals: { top: { x: 32, y: 16 }, bottom: { x: 32, y: 224 } },
+                svg: `
+              <rect class="breaker-body" x="0" y="0" width="128" height="32" rx="5"/>
+              <circle class="screw-circle" cx="32" cy="16" r="10"/>
+              <line class="screw-cross" x1="24" y1="16" x2="40" y2="16"/>
+              <line class="screw-cross" x1="32" y1="8" x2="32" y2="24"/>
+              <circle class="screw-circle" cx="96" cy="16" r="10"/>
+              <line class="screw-cross" x1="88" y1="16" x2="104" y2="16"/>
+              <line class="screw-cross" x1="96" y1="8" x2="96" y2="24"/>
+              <rect class="breaker-body" x="0" y="40" width="128" height="160" rx="5"/>
+              <rect class="breaker-body" x="12" y="108" width="40" height="24" rx="4"/>
+              <rect class="breaker-body" x="76" y="108" width="40" height="24" rx="4"/>
+              <rect class="fill-stroke" x="16" y="112" width="32" height="32" rx="3"/>
+              <text class="label" x="32" y="128">OFF</text>
+              <rect class="fill-stroke" x="80" y="112" width="32" height="32" rx="3"/>
+              <text class="label" x="96" y="128">OFF</text>
+              <rect class="fill-stroke" x="12" y="140" width="104" height="16" rx="3"/>
+              <rect class="breaker-body" x="0" y="208" width="128" height="32" rx="5"/>
+              <circle class="screw-circle" cx="32" cy="224" r="10"/>
+              <line class="screw-cross" x1="24" y1="224" x2="40" y2="224"/>
+              <line class="screw-cross" x1="32" y1="216" x2="32" y2="232"/>
+              <circle class="screw-circle" cx="96" cy="224" r="10"/>
+              <line class="screw-cross" x1="88" y1="224" x2="104" y2="224"/>
+              <line class="screw-cross" x1="96" y1="216" x2="96" y2="232"/>
+            `
+            },
+            rccb: {
+                id: 'rccb',
+                name: 'RCCB',
+                width: 128,
+                height: 240,
+                terminals: { top: { x: 32, y: 16 }, bottom: { x: 32, y: 224 } },
+                svg: `
+              <rect class="breaker-body" x="0" y="0" width="128" height="32" rx="5"/>
+              <circle class="screw-circle" cx="32" cy="16" r="10"/>
+              <line class="screw-cross" x1="24" y1="16" x2="40" y2="16"/>
+              <line class="screw-cross" x1="32" y1="8" x2="32" y2="24"/>
+              <circle class="screw-circle" cx="96" cy="16" r="10"/>
+              <line class="screw-cross" x1="88" y1="16" x2="104" y2="16"/>
+              <line class="screw-cross" x1="96" y1="8" x2="96" y2="24"/>
+              <rect class="breaker-body" x="0" y="40" width="128" height="160" rx="5"/>
+              <rect class="breaker-body" x="76" y="108" width="40" height="24" rx="4"/>
+              <rect class="fill-stroke" x="16" y="112" width="32" height="32" rx="3"/>
+              <text class="label" x="32" y="128">T</text>
+              <rect class="fill-stroke" x="80" y="112" width="32" height="32" rx="3"/>
+              <text class="label" x="96" y="128">OFF</text>
+              <rect class="fill-stroke" x="76" y="140" width="40" height="16" rx="3"/>
+              <rect class="breaker-body" x="0" y="208" width="128" height="32" rx="5"/>
+              <circle class="screw-circle" cx="32" cy="224" r="10"/>
+              <line class="screw-cross" x1="24" y1="224" x2="40" y2="224"/>
+              <line class="screw-cross" x1="32" y1="216" x2="32" y2="232"/>
+              <circle class="screw-circle" cx="96" cy="224" r="10"/>
+              <line class="screw-cross" x1="88" y1="224" x2="104" y2="224"/>
+              <line class="screw-cross" x1="96" y1="216" x2="96" y2="232"/>
+            `
+            },
+            switch_mod: {
+                id: 'switch_mod',
+                name: 'Switch',
+                width: 64,
+                height: 200,
+                terminals: { top: { x: 32, y: 16 }, bottom: { x: 32, y: 184 } },
+                svg: `<rect class="breaker-body" x="0" y="0" width="64" height="32" rx="5"/><circle class="screw-circle" cx="32" cy="16" r="10"/><line class="screw-cross" x1="24" y1="16" x2="40" y2="16"/><line class="screw-cross" x1="32" y1="8" x2="32" y2="24"/><rect class="breaker-body" x="0" y="40" width="64" height="160" rx="5"/><text class="label" x="32" y="60">SWITCH</text><rect class="fill-stroke" x="14" y="90" width="36" height="60" rx="3"/><line class="screw-cross" x1="14" y1="120" x2="50" y2="120"/><line class="screw-cross" x1="14" y1="142" x2="50" y2="142"/><circle cx="32" cy="104" r="2.5" fill="#999" stroke="none"/><rect class="breaker-body" x="0" y="208" width="64" height="32" rx="5"/><circle class="screw-circle" cx="32" cy="224" r="10"/><line class="screw-cross" x1="24" y1="224" x2="40" y2="224"/><line class="screw-cross" x1="32" y1="216" x2="32" y2="232"/>`
+            },
+            light: {
+                id: 'light',
+                name: 'Light',
+                width: 64,
+                height: 90,
+                terminals: { top: { x: 32, y: 0 }, bottom: { x: 32, y: 90 } },
+                svg: `<rect class="breaker-body" x="0" y="0" width="64" height="32" rx="5"/><circle class="screw-circle" cx="16" cy="16" r="10"/><line class="screw-cross" x1="10" y1="16" x2="22" y2="16"/><line class="screw-cross" x1="16" y1="10" x2="16" y2="22"/><circle class="screw-circle" cx="48" cy="16" r="10"/><line class="screw-cross" x1="42" y1="16" x2="54" y2="16"/><line class="screw-cross" x1="48" y1="10" x2="48" y2="22"/><path class="breaker-body" d="M 0 88 L 0 24 A 64 64 0 0 1 64 24 L 64 88 Z" fill="#fff" stroke="#111" stroke-width="1.2"/><circle cx="32" cy="56" r="18" fill="#fff" stroke="#111" stroke-width="1.2"/><text class="label" x="32" y="82">LIGHT</text>`
+            },
+            fan: {
+                id: 'fan',
+                name: 'Fan',
+                width: 64,
+                height: 90,
+                terminals: { top: { x: 32, y: 0 }, bottom: { x: 32, y: 90 } },
+                svg: `<defs><path id="fb" d="M 0,0 C 12,-20 20,-8 8,-2 C 3,0 0,0 0,0" fill="#fff" stroke="#111" stroke-width="1.2" stroke-linejoin="round"/></defs><rect class="breaker-body" x="0" y="0" width="64" height="32" rx="5"/><circle class="screw-circle" cx="16" cy="16" r="10"/><line class="screw-cross" x1="10" y1="16" x2="22" y2="16"/><line class="screw-cross" x1="16" y1="10" x2="16" y2="22"/><circle class="screw-circle" cx="48" cy="16" r="10"/><line class="screw-cross" x1="42" y1="16" x2="54" y2="16"/><line class="screw-cross" x1="48" y1="10" x2="48" y2="22"/><path class="breaker-body" d="M 0 88 L 0 24 A 64 64 0 0 1 64 24 L 64 88 Z" fill="#fff" stroke="#111" stroke-width="1.2"/><g transform="translate(32,56)"><circle cx="0" cy="0" r="4" fill="#fff" stroke="#111" stroke-width="1.2"/><use href="#fb"/><use href="#fb" transform="rotate(120)"/><use href="#fb" transform="rotate(240)"/></g><text class="label" x="32" y="82">FAN</text>`
+            }
+        };
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  STATE
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        let nodes = [];
+        let wires = [];
+        let junctions = [];
+        let nextId = 1;
+        let nextJunctionId = 1;
+        let letterCounter = 0;
+        const nextLetter = () => "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[letterCounter++ % 26];
+
+        let currentMode = 'wire';
+        let isDrawingWire = false;
+        let wireStartPoint = null;
+        let wireWaypoints = [];
+        let moveDragState = null;
+        let dragState = null;
+        let selectedWireId = null;
+
+        // ── Zoom / Pan State ──
+        let viewX = 0,
+            viewY = 0;
+        let zoom = 1.0;
+        const MIN_ZOOM = 0.2,
+            MAX_ZOOM = 5.0;
+
+        // ── Touch state ──
+        let lastTouchDist = 0;
+        let touchStartX = 0,
+            touchStartY = 0;
+        let touchStartViewX = 0,
+            touchStartViewY = 0;
+        let touchStartZoom = 1;
+        let touchPanActive = false;
+        let lastTouchPos = null;
+        let touchAlignPoint = null;
+
+        const canvasWrap = document.getElementById('canvasWrap');
+        const wireCanvas = document.getElementById('wireCanvas');
+        const ctx = wireCanvas.getContext('2d');
+        const palette = document.getElementById('palette');
+        const toast = document.getElementById('toast');
+
+        const ROUND_RADIUS = 14;
+        const WP_HIT = 16;
+        const SEGMENT_HIT = 10;
+        const CLOSE_DIST = 25;
+        const ALIGN_TOLERANCE = 22;
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  TOAST
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        let toastTimer = null;
+
+        function showToast(msg, duration = 1800) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  PALETTE
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function buildPalette() {
+            palette.innerHTML = '<div class="palette-label">Components</div>';
+            for (const [key, def] of Object.entries(COMP_TYPES)) {
+                const item = document.createElement('div');
+                item.className = 'palette-item';
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('viewBox', `0 0 ${def.width} ${def.height}`);
+                svg.innerHTML = def.svg;
+                svg.style.width = '20px';
+                svg.style.height = 'auto';
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'pname';
+                nameSpan.textContent = def.name;
+                item.appendChild(svg);
+                item.appendChild(nameSpan);
+                item.dataset.type = key;
+                item.addEventListener('click', () => addNode(key));
+                item.addEventListener('touchend', (e) => { e.preventDefault();
+                    addNode(key); });
+                palette.appendChild(item);
+            }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  COORDINATE TRANSFORMS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function worldToScreen(wx, wy) {
+            return { x: (wx - viewX) * zoom, y: (wy - viewY) * zoom };
+        }
+
+        function screenToWorld(sx, sy) {
+            return { x: sx / zoom + viewX, y: sy / zoom + viewY };
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  JUNCTION MANAGEMENT
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function findJunctionByWaypoint(wireId, idx) {
+            for (const j of junctions) {
+                for (const wp of j.waypoints) {
+                    if (wp.wireId === wireId && wp.idx === idx) return j;
+                }
+            }
+            return null;
+        }
+
+        function createJunction(x, y, waypointRefs) {
+            const j = { id: nextJunctionId++, waypoints: waypointRefs.map(w => ({ wireId: w.wireId, idx: w.idx })), x, y };
+            junctions.push(j);
+            return j;
+        }
+
+        function updateJunctionPosition(junctionId, x, y) {
+            const j = junctions.find(j => j.id === junctionId);
+            if (!j) return;
+            j.x = x;
+            j.y = y;
+            for (const wp of j.waypoints) {
+                const wire = wires.find(w => w.id === wp.wireId);
+                if (wire && wire.waypoints[wp.idx]) {
+                    wire.waypoints[wp.idx].x = x;
+                    wire.waypoints[wp.idx].y = y;
+                }
+            }
+        }
+
+        function detectAndCreateJunctions() {
+            junctions = [];
+            const waypointMap = new Map();
+            for (const wire of wires) {
+                for (let i = 0; i < wire.waypoints.length; i++) {
+                    const wp = wire.waypoints[i];
+                    const key = `${Math.round(wp.x * 10) / 10},${Math.round(wp.y * 10) / 10}`;
+                    if (!waypointMap.has(key)) waypointMap.set(key, []);
+                    waypointMap.get(key).push({ wireId: wire.id, idx: i, x: wp.x, y: wp.y });
+                }
+            }
+            for (const [key, wps] of waypointMap) {
+                if (wps.length > 1) {
+                    const [x, y] = key.split(',').map(Number);
+                    createJunction(x, y, wps.map(w => ({ wireId: w.wireId, idx: w.idx })));
+                }
+            }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  NODE MANAGEMENT
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function addNode(typeId, x, y) {
+            const def = COMP_TYPES[typeId];
+            if (!def) return;
+            if (x === undefined || y === undefined) {
+                const rect = canvasWrap.getBoundingClientRect();
+                const visW = rect.width;
+                const visH = rect.height;
+                x = viewX + (visW / 2 / zoom) - def.width / 2 + (Math.random() - 0.5) * 40;
+                y = viewY + (visH / 2 / zoom) - def.height / 2 + (Math.random() - 0.5) * 40;
+                x = Math.max(0, x);
+                y = Math.max(0, y);
+            }
+            const id = nextId++;
+            const node = { id, typeId, x, y, width: def.width, height: def.height, el: null, terminals: def.terminals };
+            const el = document.createElement('div');
+            el.className = 'c-node';
+            el.dataset.nodeId = id;
+            // We'll set transform in redraw
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', `0 0 ${def.width} ${def.height}`);
+            svg.classList.add('node-svg');
+            svg.innerHTML = def.svg;
+
+            for (const [termName, pos] of Object.entries(def.terminals)) {
+                const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                c.setAttribute('cx', pos.x);
+                c.setAttribute('cy', pos.y);
+                c.setAttribute('r', '9');
+                c.classList.add('terminal');
+                c.dataset.term = termName;
+                c.dataset.nodeId = id;
+                svg.appendChild(c);
+            }
+            el.appendChild(svg);
+
+            const del = document.createElement('div');
+            del.className = 'delete-btn';
+            del.textContent = '×';
+            del.title = 'Remove component';
+            del.addEventListener('mousedown', (e) => { e.stopPropagation();
+                deleteNode(id); });
+            del.addEventListener('touchstart', (e) => { e.stopPropagation();
+                deleteNode(id); });
+            el.appendChild(del);
+
+            // Drag support
+            el.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.terminal') || e.target.closest('.delete-btn')) return;
+                e.preventDefault();
+                e.stopPropagation();
+                const node = getNode(id);
+                if (!node) return;
+                const rect = node.el.getBoundingClientRect();
+                dragState = { nodeId: id, offsetX: (e.clientX - rect.left) / zoom, offsetY: (e.clientY - rect.top) /
+                        zoom };
+                node.el.classList.add('dragging');
+                document.addEventListener('mousemove', onDragMove);
+                document.addEventListener('mouseup', onDragEnd);
+            });
+            el.addEventListener('touchstart', (e) => {
+                if (e.target.closest('.terminal') || e.target.closest('.delete-btn')) return;
+                if (e.touches.length !== 1) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                const node = getNode(id);
+                if (!node) return;
+                const rect = node.el.getBoundingClientRect();
+                dragState = { nodeId: id, offsetX: (touch.clientX - rect.left) / zoom, offsetY: (touch.clientY - rect
+                        .top) / zoom };
+                node.el.classList.add('dragging');
+                document.addEventListener('touchmove', onTouchDragMove, { passive: false });
+                document.addEventListener('touchend', onTouchDragEnd, { passive: false });
+                document.addEventListener('touchcancel', onTouchDragEnd, { passive: false });
+            }, { passive: false });
+
+            svg.querySelectorAll('.terminal').forEach(t => {
+                t.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const nid = parseInt(t.dataset.nodeId);
+                    const term = t.dataset.term;
+                    if (currentMode === 'wire') {
+                        handleConnectClick(nid, term);
+                    } else {
+                        showToast('Switch to Wire mode to connect', 1200);
+                    }
+                });
+                t.addEventListener('touchstart', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const nid = parseInt(t.dataset.nodeId);
+                    const term = t.dataset.term;
+                    if (currentMode === 'wire') {
+                        handleConnectClick(nid, term);
+                    } else {
+                        showToast('Switch to Wire mode to connect', 1200);
+                    }
+                }, { passive: false });
+            });
+
+            canvasWrap.appendChild(el);
+            node.el = el;
+            nodes.push(node);
+            updateComponentTransforms();
+            updateCanvasSize();
+            redraw();
+            showToast(`Added ${def.name}`);
+            return node;
+        }
+
+        function deleteNode(id) {
+            const idx = nodes.findIndex(n => n.id === id);
+            if (idx === -1) return;
+            const node = nodes[idx];
+            const toRemove = wires.filter(w => w.fromNodeId === id || w.toNodeId === id);
+            for (const w of toRemove) removeWire(w.id);
+            if (node.el && node.el.parentNode) node.el.parentNode.removeChild(node.el);
+            nodes.splice(idx, 1);
+            if (isDrawingWire && wireStartPoint && wireStartPoint.nodeId === id) cancelWire();
+            detectAndCreateJunctions();
+            updateCanvasSize();
+            redraw();
+            showToast('Removed component');
+        }
+
+        function getNode(id) { return nodes.find(n => n.id === id); }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  DRAG HELPERS (with zoom)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function onDragMove(e) {
+            if (!dragState) return;
+            e.preventDefault();
+            const node = getNode(dragState.nodeId);
+            if (!node) return;
+            const rect = canvasWrap.getBoundingClientRect();
+            const wx = (e.clientX - rect.left) / zoom + viewX - dragState.offsetX;
+            const wy = (e.clientY - rect.top) / zoom + viewY - dragState.offsetY;
+            node.x = Math.max(0, wx);
+            node.y = Math.max(0, wy);
+            updateComponentTransforms();
+            redraw();
+        }
+
+        function onDragEnd(e) {
+            if (!dragState) return;
+            const node = getNode(dragState.nodeId);
+            if (node) node.el.classList.remove('dragging');
+            dragState = null;
+            document.removeEventListener('mousemove', onDragMove);
+            document.removeEventListener('mouseup', onDragEnd);
+            updateCanvasSize();
+            redraw();
+        }
+
+        function onTouchDragMove(e) {
+            if (!dragState) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const node = getNode(dragState.nodeId);
+            if (!node) return;
+            const rect = canvasWrap.getBoundingClientRect();
+            const wx = (touch.clientX - rect.left) / zoom + viewX - dragState.offsetX;
+            const wy = (touch.clientY - rect.top) / zoom + viewY - dragState.offsetY;
+            node.x = Math.max(0, wx);
+            node.y = Math.max(0, wy);
+            updateComponentTransforms();
+            redraw();
+        }
+
+        function onTouchDragEnd(e) {
+            if (!dragState) return;
+            const node = getNode(dragState.nodeId);
+            if (node) node.el.classList.remove('dragging');
+            dragState = null;
+            document.removeEventListener('touchmove', onTouchDragMove);
+            document.removeEventListener('touchend', onTouchDragEnd);
+            document.removeEventListener('touchcancel', onTouchDragEnd);
+            updateCanvasSize();
+            redraw();
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  WIRE LOGIC
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function handleConnectClick(nodeId, term) {
+            if (currentMode !== 'wire') return;
+            const node = getNode(nodeId);
+            if (!node) return;
+            const pos = getTerminalPosition(node, term);
+            processConnectPoint({ type: 'terminal', nodeId, term, x: pos.x, y: pos.y });
+        }
+
+        function handleWaypointClick(wireId, idx, x, y) {
+            if (currentMode !== 'wire') return;
+            processConnectPoint({ type: 'waypoint', wireId, idx, x, y });
+        }
+
+        function processConnectPoint(point) {
+            if (!isDrawingWire) {
+                isDrawingWire = true;
+                wireStartPoint = point;
+                wireWaypoints = [];
+                showToast(`Started — tap canvas for waypoints, tap point/wire to finish`, 2500);
+                redraw();
+                return;
+            }
+            if (wireStartPoint.x === point.x && wireStartPoint.y === point.y) {
+                showToast('Same point, ignored', 800);
+                return;
+            }
+            if (wireStartPoint.type === 'terminal' && point.type === 'terminal' && wireStartPoint.nodeId === point.nodeId) {
+                showToast('Cannot connect to the same component', 1200);
+                return;
+            }
+            finishWire(point);
+        }
+
+        function finishWire(endPoint) {
+            const start = wireStartPoint;
+            const end = endPoint;
+            let allPts = [];
+
+            if (start.type === 'terminal') {
+                const node = getNode(start.nodeId);
+                if (!node) { cancelWire(); return; }
+                const pos = getTerminalPosition(node, start.term);
+                allPts.push({ x: pos.x, y: pos.y });
+            } else {
+                allPts.push({ x: start.x, y: start.y });
+            }
+
+            for (const wp of wireWaypoints) {
+                allPts.push({ x: wp.x, y: wp.y });
+            }
+
+            if (end.type === 'terminal') {
+                const node = getNode(end.nodeId);
+                if (!node) { cancelWire(); return; }
+                const pos = getTerminalPosition(node, end.term);
+                allPts.push({ x: pos.x, y: pos.y });
+            } else {
+                allPts.push({ x: end.x, y: end.y });
+            }
+
+            const snapped = snapToOrthogonal(allPts);
+            let fromNodeId = -1,
+                toNodeId = -1,
+                fromTerm = null,
+                toTerm = null;
+            let finalWp = [];
+
+            if (start.type === 'terminal') {
+                fromNodeId = start.nodeId;
+                fromTerm = start.term;
+            } else {
+                finalWp.push({ x: snapped[0].x, y: snapped[0].y });
+            }
+
+            for (let i = 1; i < snapped.length - 1; i++) {
+                finalWp.push({ x: snapped[i].x, y: snapped[i].y });
+            }
+
+            if (end.type === 'terminal') {
+                toNodeId = end.nodeId;
+                toTerm = end.term;
+            } else {
+                finalWp.push({ x: snapped[snapped.length - 1].x, y: snapped[snapped.length - 1].y });
+            }
+
+            const dup = wires.some(w =>
+                w.fromNodeId === fromNodeId && w.fromTerm === fromTerm &&
+                w.toNodeId === toNodeId && w.toTerm === toTerm &&
+                JSON.stringify(w.waypoints) === JSON.stringify(finalWp)
+            );
+            if (dup) {
+                showToast('Wire already exists', 1200);
+                cancelWire();
+                return;
+            }
+
+            const id = nextId++;
+            wires.push({ id, fromNodeId, fromTerm, toNodeId, toTerm, waypoints: finalWp });
+            selectedWireId = id;
+            detectAndCreateJunctions();
+            cancelWire();
+            showToast('Wire connected!');
+        }
+
+        function cancelWire() {
+            isDrawingWire = false;
+            wireStartPoint = null;
+            wireWaypoints = [];
+            redraw();
+        }
+
+        function addWaypoint(x, y) {
+            if (wireWaypoints.length === 0) {
+                const start = wireStartPoint;
+                if (!start) return;
+                const dx = Math.abs(x - start.x);
+                const dy = Math.abs(y - start.y);
+                let snapX, snapY;
+                if (dx < dy) { snapX = start.x;
+                    snapY = y; } else { snapX = x;
+                    snapY = start.y; }
+                if (Math.hypot(snapX - start.x, snapY - start.y) < 2) {
+                    showToast('Waypoint too close', 700);
+                    return;
+                }
+                wireWaypoints.push({ x: snapX, y: snapY, letter: nextLetter() });
+                redraw();
+                showToast(`Waypoint ${wireWaypoints[wireWaypoints.length-1].letter} added`, 600);
+                return;
+            }
+
+            const prev = wireWaypoints[wireWaypoints.length - 1];
+            const dx = Math.abs(x - prev.x);
+            const dy = Math.abs(y - prev.y);
+            let snapX, snapY;
+            if (dx < dy) { snapX = prev.x;
+                snapY = y; } else { snapX = x;
+                snapY = prev.y; }
+            if (Math.hypot(snapX - prev.x, snapY - prev.y) < 2) {
+                showToast('Waypoint too close', 700);
+                return;
+            }
+            wireWaypoints.push({ x: snapX, y: snapY, letter: nextLetter() });
+            redraw();
+            showToast(`Waypoint ${wireWaypoints[wireWaypoints.length-1].letter} added`, 600);
+        }
+
+        function splitWireAtPoint(wireId, x, y) {
+            const wire = wires.find(w => w.id === wireId);
+            if (!wire) return false;
+            const pts = getWirePoints(wire);
+            if (!pts || pts.length < 2) return false;
+
+            let bestSeg = -1,
+                bestDist = Infinity;
+            for (let i = 0; i < pts.length - 1; i++) {
+                const d = distToSegment(x, y, pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y);
+                if (d < bestDist) { bestDist = d;
+                    bestSeg = i; }
+            }
+            if (bestSeg < 0 || bestSeg >= pts.length - 1 || bestDist > 12) return false;
+
+            const segStart = pts[bestSeg];
+            const segEnd = pts[bestSeg + 1];
+            if (Math.hypot(x - segStart.x, y - segStart.y) < 5 || Math.hypot(x - segEnd.x, y - segEnd.y) < 5) return false;
+
+            const dx = Math.abs(segEnd.x - segStart.x);
+            const dy = Math.abs(segEnd.y - segStart.y);
+            let snapX, snapY;
+            if (dx > dy) {
+                snapX = x;
+                snapY = segStart.y + (y - segStart.y) * dy / (dy + dx || 1);
+                snapY = Math.abs(snapY - segStart.y) < Math.abs(snapY - segEnd.y) ? segStart.y : segEnd.y;
+            } else {
+                snapY = y;
+                snapX = segStart.x + (x - segStart.x) * dx / (dx + dy || 1);
+                snapX = Math.abs(snapX - segStart.x) < Math.abs(snapX - segEnd.x) ? segStart.x : segEnd.x;
+            }
+
+            let wpInsertIdx = Math.max(0, Math.min(wire.waypoints.length, bestSeg === 0 ? 0 : bestSeg));
+            wire.waypoints.splice(wpInsertIdx, 0, { x: snapX, y: snapY });
+
+            const fromNode = getNode(wire.fromNodeId);
+            const toNode = getNode(wire.toNodeId);
+            if (fromNode && toNode) {
+                const from = getTerminalPosition(fromNode, wire.fromTerm);
+                const to = getTerminalPosition(toNode, wire.toTerm);
+                const allPts = [from, ...wire.waypoints, to];
+                wire.waypoints = snapToOrthogonal(allPts).slice(1, -1);
+            }
+            detectAndCreateJunctions();
+            redraw();
+            showToast('Wire split at tap point', 800);
+            return wpInsertIdx;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  HELPERS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function snapToOrthogonal(points) {
+            if (points.length < 2) return points;
+            const result = [points[0]];
+            for (let i = 1; i < points.length; i++) {
+                const prev = result[result.length - 1];
+                const curr = points[i];
+                if (prev.x === curr.x || prev.y === curr.y) {
+                    result.push(curr);
+                } else {
+                    const next = (i + 1 < points.length) ? points[i + 1] : null;
+                    let corner1 = { x: curr.x, y: prev.y };
+                    let corner2 = { x: prev.x, y: curr.y };
+                    let useCorner1 = true;
+                    if (next) {
+                        const d1 = Math.hypot(next.x - corner1.x, next.y - corner1.y) +
+                            Math.hypot(corner1.x - prev.x, corner1.y - prev.y);
+                        const d2 = Math.hypot(next.x - corner2.x, next.y - corner2.y) +
+                            Math.hypot(corner2.x - prev.x, corner2.y - prev.y);
+                        useCorner1 = d1 <= d2;
+                    } else {
+                        const d1 = Math.hypot(curr.x - corner1.x, curr.y - corner1.y) +
+                            Math.hypot(corner1.x - prev.x, corner1.y - prev.y);
+                        const d2 = Math.hypot(curr.x - corner2.x, curr.y - corner2.y) +
+                            Math.hypot(corner2.x - prev.x, corner2.y - prev.y);
+                        useCorner1 = d1 <= d2;
+                    }
+                    const corner = useCorner1 ? corner1 : corner2;
+                    if (Math.hypot(corner.x - prev.x, corner.y - prev.y) > 1) {
+                        result.push(corner);
+                    }
+                    result.push(curr);
+                }
+            }
+            const cleaned = [result[0]];
+            for (let i = 1; i < result.length; i++) {
+                const last = cleaned[cleaned.length - 1];
+                const cur = result[i];
+                if (last.x === cur.x && last.y === cur.y) continue;
+                if (cleaned.length >= 2) {
+                    const prev2 = cleaned[cleaned.length - 2];
+                    if ((prev2.x === last.x && last.x === cur.x) ||
+                        (prev2.y === last.y && last.y === cur.y)) {
+                        cleaned.pop();
+                        cleaned.push(cur);
+                        continue;
+                    }
+                }
+                cleaned.push(cur);
+            }
+            return cleaned;
+        }
+
+        function getMousePos(e) {
+            const rect = canvasWrap.getBoundingClientRect();
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top,
+                clientX: e.clientX,
+                clientY: e.clientY
+            };
+        }
+
+        function getTouchPos(e) {
+            const touch = e.touches[0];
+            const rect = canvasWrap.getBoundingClientRect();
+            return {
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top,
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            };
+        }
+
+        function getTerminalPosition(node, term) {
+            const t = node.terminals[term];
+            return { x: node.x + t.x, y: node.y + t.y };
+        }
+
+        function getWirePoints(wire) {
+            const fromNode = getNode(wire.fromNodeId);
+            const toNode = getNode(wire.toNodeId);
+            let pts = [];
+
+            if (wire.fromNodeId === -1) {
+                if (wire.waypoints.length > 0) {
+                    pts.push({ x: wire.waypoints[0].x, y: wire.waypoints[0].y });
+                } else {
+                    return null;
+                }
+            } else if (fromNode) {
+                pts.push(getTerminalPosition(fromNode, wire.fromTerm));
+            } else {
+                if (wire.waypoints.length > 0) {
+                    pts.push({ x: wire.waypoints[0].x, y: wire.waypoints[0].y });
+                } else {
+                    return null;
+                }
+            }
+
+            let startIdx = (wire.fromNodeId === -1 || !fromNode) ? 1 : 0;
+            let endIdx = (wire.toNodeId === -1 || !toNode) ? wire.waypoints.length - 1 : wire.waypoints.length;
+            for (let i = startIdx; i < endIdx && i < wire.waypoints.length; i++) {
+                pts.push({ x: wire.waypoints[i].x, y: wire.waypoints[i].y });
+            }
+
+            if (wire.toNodeId === -1) {
+                if (wire.waypoints.length > 0) {
+                    pts.push({ x: wire.waypoints[wire.waypoints.length - 1].x, y: wire.waypoints[wire.waypoints.length - 1]
+                            .y });
+                }
+            } else if (toNode) {
+                pts.push(getTerminalPosition(toNode, wire.toTerm));
+            } else {
+                if (wire.waypoints.length > 0) {
+                    pts.push({ x: wire.waypoints[wire.waypoints.length - 1].x, y: wire.waypoints[wire.waypoints.length - 1]
+                            .y });
+                }
+            }
+
+            const cleaned = [];
+            for (const p of pts) {
+                if (cleaned.length === 0) {
+                    cleaned.push(p);
+                } else {
+                    const last = cleaned[cleaned.length - 1];
+                    if (Math.hypot(p.x - last.x, p.y - last.y) > 0.01) {
+                        cleaned.push(p);
+                    }
+                }
+            }
+            return cleaned.length >= 2 ? cleaned : null;
+        }
+
+        function removeWire(id) {
+            const idx = wires.findIndex(w => w.id === id);
+            if (idx === -1) return;
+            wires.splice(idx, 1);
+            if (selectedWireId === id) selectedWireId = null;
+            detectAndCreateJunctions();
+            redraw();
+        }
+
+        function distToSegment(px, py, ax, ay, bx, by) {
+            const dx = bx - ax,
+                dy = by - ay;
+            const len2 = dx * dx + dy * dy;
+            if (len2 === 0) return Math.hypot(px - ax, py - ay);
+            let t = ((px - ax) * dx + (py - ay) * dy) / len2;
+            t = Math.max(0, Math.min(1, t));
+            const cx = ax + t * dx,
+                cy = ay + t * dy;
+            return Math.hypot(px - cx, py - cy);
+        }
+
+        function hitTestWire(px, py) {
+            for (const wire of wires) {
+                const pts = getWirePoints(wire);
+                if (!pts || pts.length < 2) continue;
+                for (let i = 0; i < pts.length - 1; i++) {
+                    if (distToSegment(px, py, pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y) < SEGMENT_HIT) {
+                        return wire.id;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function hitTestWaypointGlobal(px, py) {
+            for (const wire of wires) {
+                for (let i = 0; i < wire.waypoints.length; i++) {
+                    const wp = wire.waypoints[i];
+                    if (Math.hypot(px - wp.x, py - wp.y) < WP_HIT) {
+                        return { wireId: wire.id, idx: i, x: wp.x, y: wp.y };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getAllSnapPoints(excludeWireId, excludeIdx, excludeNodeId) {
+            const points = [];
+            for (const node of nodes) {
+                if (excludeNodeId !== undefined && node.id === excludeNodeId) continue;
+                for (const [term, pos] of Object.entries(node.terminals)) {
+                    points.push({ x: node.x + pos.x, y: node.y + pos.y, type: 'terminal', nodeId: node.id, term: term });
+                }
+            }
+            for (const wire of wires) {
+                if (excludeWireId !== undefined && wire.id === excludeWireId) continue;
+                for (let i = 0; i < wire.waypoints.length; i++) {
+                    if (excludeWireId !== undefined && wire.id === excludeWireId && i === excludeIdx) continue;
+                    const wp = wire.waypoints[i];
+                    points.push({ x: wp.x, y: wp.y, type: 'waypoint', wireId: wire.id, idx: i });
+                }
+            }
+            return points;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  COMPONENT TRANSFORMS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function updateComponentTransforms() {
+            for (const node of nodes) {
+                if (!node.el) continue;
+                const sx = (node.x - viewX) * zoom;
+                const sy = (node.y - viewY) * zoom;
+                node.el.style.transform = `translate(${sx}px, ${sy}px) scale(${zoom})`;
+                node.el.style.transformOrigin = '0 0';
+                node.el.style.width = node.width + 'px';
+                node.el.style.height = node.height + 'px';
+                // Keep the delete button from scaling too much? It's okay.
+            }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  ALIGNMENT GUIDES
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function drawAlignmentGuides(ctx, sx, sy, w, h, excludeWireId, excludeIdx, excludeNodeId) {
+            const worldPos = screenToWorld(sx, sy);
+            const points = getAllSnapPoints(excludeWireId, excludeIdx, excludeNodeId);
+
+            let sourcePoints = [];
+            if (dragState) {
+                const node = getNode(dragState.nodeId);
+                if (node) {
+                    for (const [term, pos] of Object.entries(node.terminals)) {
+                        sourcePoints.push({ x: node.x + pos.x, y: node.y + pos.y });
+                    }
+                }
+            } else if (moveDragState) {
+                if (moveDragState.type === 'waypoint') {
+                    const wire = wires.find(w => w.id === moveDragState.wireId);
+                    if (wire && wire.waypoints[moveDragState.idx]) {
+                        const wp = wire.waypoints[moveDragState.idx];
+                        sourcePoints.push({ x: wp.x, y: wp.y });
+                    }
+                } else if (moveDragState.type === 'junction') {
+                    const j = junctions.find(j => j.id === moveDragState.junctionId);
+                    if (j) sourcePoints.push({ x: j.x, y: j.y });
+                }
+            }
+            if (sourcePoints.length === 0) {
+                sourcePoints = [{ x: worldPos.x, y: worldPos.y }];
+            }
+
+            for (const sp of sourcePoints) {
+                for (const snap of points) {
+                    const dx = Math.abs(sp.x - snap.x);
+                    const dy = Math.abs(sp.y - snap.y);
+
+                    if (dx < ALIGN_TOLERANCE / zoom) {
+                        const sxPos = (snap.x - viewX) * zoom;
+                        ctx.save();
+                        ctx.setLineDash([6, 4]);
+                        ctx.strokeStyle = '#ff8800';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(sxPos, 0);
+                        ctx.lineTo(sxPos, h);
+                        ctx.stroke();
+                        ctx.restore();
+                        ctx.save();
+                        const grad = ctx.createRadialGradient(sxPos, (snap.y - viewY) * zoom, 0, sxPos, (snap.y - viewY) *
+                            zoom, 20 * zoom);
+                        grad.addColorStop(0, 'rgba(255,136,0,0.25)');
+                        grad.addColorStop(1, 'rgba(255,136,0,0)');
+                        ctx.fillStyle = grad;
+                        ctx.beginPath();
+                        ctx.arc(sxPos, (snap.y - viewY) * zoom, 20 * zoom, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                        ctx.save();
+                        ctx.fillStyle = '#ff8800';
+                        ctx.strokeStyle = '#fff';
+                        ctx.lineWidth = 2;
+                        const r = 6 * Math.min(1, zoom);
+                        ctx.beginPath();
+                        ctx.arc(sxPos, (snap.y - viewY) * zoom, r, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        ctx.restore();
+                        ctx.save();
+                        ctx.fillStyle = '#ff8800';
+                        ctx.font = `bold ${10*Math.min(1, zoom)}px "Segoe UI", Arial, sans-serif`;
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'bottom';
+                        ctx.fillText(snap.type === 'terminal' ? '⚡T' : '●W', sxPos + 10 * zoom, (snap.y - viewY) * zoom -
+                            4 * zoom);
+                        ctx.restore();
+                    }
+
+                    if (dy < ALIGN_TOLERANCE / zoom) {
+                        const syPos = (snap.y - viewY) * zoom;
+                        ctx.save();
+                        ctx.setLineDash([6, 4]);
+                        ctx.strokeStyle = '#ff8800';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(0, syPos);
+                        ctx.lineTo(w, syPos);
+                        ctx.stroke();
+                        ctx.restore();
+                        ctx.save();
+                        const grad = ctx.createRadialGradient((snap.x - viewX) * zoom, syPos, 0, (snap.x - viewX) * zoom,
+                            syPos, 20 * zoom);
+                        grad.addColorStop(0, 'rgba(255,136,0,0.25)');
+                        grad.addColorStop(1, 'rgba(255,136,0,0)');
+                        ctx.fillStyle = grad;
+                        ctx.beginPath();
+                        ctx.arc((snap.x - viewX) * zoom, syPos, 20 * zoom, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                        ctx.save();
+                        ctx.fillStyle = '#ff8800';
+                        ctx.strokeStyle = '#fff';
+                        ctx.lineWidth = 2;
+                        const r = 6 * Math.min(1, zoom);
+                        ctx.beginPath();
+                        ctx.arc((snap.x - viewX) * zoom, syPos, r, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        ctx.restore();
+                        ctx.save();
+                        ctx.fillStyle = '#ff8800';
+                        ctx.font = `bold ${10*Math.min(1, zoom)}px "Segoe UI", Arial, sans-serif`;
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'bottom';
+                        ctx.fillText(snap.type === 'terminal' ? '⚡T' : '●W', (snap.x - viewX) * zoom + 10 * zoom, syPos -
+                            4 * zoom);
+                        ctx.restore();
+                    }
+                }
+                if (dragState) {
+                    ctx.save();
+                    ctx.fillStyle = '#ff8800';
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    const r = 5 * Math.min(1, zoom);
+                    ctx.beginPath();
+                    ctx.arc((sp.x - viewX) * zoom, (sp.y - viewY) * zoom, r, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  MOVE TOOL
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function startMoveDrag(e) {
+            const pos = getMousePos(e);
+            const wx = screenToWorld(pos.x, pos.y);
+            const wpHit = hitTestWaypointGlobal(wx.x, wx.y);
+            if (wpHit) {
+                const junction = findJunctionByWaypoint(wpHit.wireId, wpHit.idx);
+                if (junction) {
+                    moveDragState = {
+                        type: 'junction',
+                        junctionId: junction.id,
+                        offsetX: wx.x - junction.x,
+                        offsetY: wx.y - junction.y,
+                        startX: junction.x,
+                        startY: junction.y
+                    };
+                    canvasWrap.style.cursor = 'grabbing';
+                    showToast('Moving junction', 600);
+                    return;
+                }
+                moveDragState = {
+                    type: 'waypoint',
+                    wireId: wpHit.wireId,
+                    idx: wpHit.idx,
+                    offsetX: wx.x - wpHit.x,
+                    offsetY: wx.y - wpHit.y,
+                    startX: wpHit.x,
+                    startY: wpHit.y
+                };
+                canvasWrap.style.cursor = 'grabbing';
+                showToast(`Moving waypoint ${String.fromCharCode(65 + wpHit.idx)}`, 600);
+                selectedWireId = wpHit.wireId;
+                return;
+            }
+
+            const wireHit = hitTestWire(wx.x, wx.y);
+            if (wireHit !== null) {
+                const wire = wires.find(w => w.id === wireHit);
+                if (wire) {
+                    const pts = getWirePoints(wire);
+                    if (pts) {
+                        let bestSeg = -1,
+                            bestDist = Infinity;
+                        for (let i = 0; i < pts.length - 1; i++) {
+                            const d = distToSegment(wx.x, wx.y, pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y);
+                            if (d < bestDist) { bestDist = d;
+                                bestSeg = i; }
+                        }
+                        if (bestSeg >= 0 && bestSeg < pts.length - 1 && bestDist < 12) {
+                            const segStart = pts[bestSeg];
+                            const segEnd = pts[bestSeg + 1];
+                            if (Math.hypot(wx.x - segStart.x, wx.y - segStart.y) > 5 &&
+                                Math.hypot(wx.x - segEnd.x, wx.y - segEnd.y) > 5) {
+                                const dx = Math.abs(segEnd.x - segStart.x);
+                                const dy = Math.abs(segEnd.y - segStart.y);
+                                let snapX, snapY;
+                                if (dx > dy) {
+                                    snapX = wx.x;
+                                    snapY = segStart.y + (wx.y - segStart.y) * dy / (dy + dx || 1);
+                                    snapY = Math.abs(snapY - segStart.y) < Math.abs(snapY - segEnd.y) ? segStart.y :
+                                        segEnd.y;
+                                } else {
+                                    snapY = wx.y;
+                                    snapX = segStart.x + (wx.x - segStart.x) * dx / (dx + dy || 1);
+                                    snapX = Math.abs(snapX - segStart.x) < Math.abs(snapX - segEnd.x) ? segStart.x :
+                                        segEnd.x;
+                                }
+                                let wpInsertIdx = Math.max(0, Math.min(wire.waypoints.length, bestSeg === 0 ? 0 :
+                                bestSeg));
+                                wire.waypoints.splice(wpInsertIdx, 0, { x: snapX, y: snapY });
+                                const fromNode = getNode(wire.fromNodeId);
+                                const toNode = getNode(wire.toNodeId);
+                                if (fromNode && toNode) {
+                                    const from = getTerminalPosition(fromNode, wire.fromTerm);
+                                    const to = getTerminalPosition(toNode, wire.toTerm);
+                                    wire.waypoints = snapToOrthogonal([from, ...wire.waypoints, to]).slice(1, -1);
+                                }
+                                const newIdx = wire.waypoints.length - 1;
+                                detectAndCreateJunctions();
+                                selectedWireId = wireHit;
+                                const newWp = wire.waypoints[newIdx];
+                                moveDragState = {
+                                    type: 'waypoint',
+                                    wireId: wireHit,
+                                    idx: newIdx,
+                                    offsetX: wx.x - newWp.x,
+                                    offsetY: wx.y - newWp.y,
+                                    startX: newWp.x,
+                                    startY: newWp.y
+                                };
+                                canvasWrap.style.cursor = 'grabbing';
+                                showToast('New waypoint created, drag to position', 800);
+                                redraw();
+                                return;
+                            }
+                        }
+                    }
+                }
+                selectedWireId = wireHit;
+                redraw();
+                showToast('Wire selected', 600);
+                return;
+            }
+
+            if (selectedWireId !== null) {
+                selectedWireId = null;
+                redraw();
+            }
+        }
+
+        function moveDragMove(e) {
+            if (!moveDragState) return;
+            const pos = getMousePos(e);
+            const wx = screenToWorld(pos.x, pos.y);
+
+            if (moveDragState.type === 'junction') {
+                const j = junctions.find(j => j.id === moveDragState.junctionId);
+                if (j) {
+                    const newX = wx.x - moveDragState.offsetX;
+                    const newY = wx.y - moveDragState.offsetY;
+                    updateJunctionPosition(j.id, newX, newY);
+                    redraw();
+                }
+                return;
+            }
+
+            if (moveDragState.type === 'waypoint') {
+                const wire = wires.find(w => w.id === moveDragState.wireId);
+                if (!wire || moveDragState.idx < 0 || moveDragState.idx >= wire.waypoints.length) return;
+
+                let newX = wx.x - moveDragState.offsetX;
+                let newY = wx.y - moveDragState.offsetY;
+
+                const pts = getWirePoints(wire);
+                if (pts && moveDragState.idx >= 0 && moveDragState.idx < wire.waypoints.length) {
+                    const idx = moveDragState.idx + 1;
+                    if (idx > 0 && idx < pts.length - 1) {
+                        const prev = pts[idx - 1];
+                        const next = pts[idx + 1];
+                        if (prev.y === next.y) newY = prev.y;
+                        else if (prev.x === next.x) newX = prev.x;
+                    }
+                }
+
+                const snapTarget = findNearestSnapTarget(newX, newY, moveDragState.wireId, moveDragState.idx);
+                if (snapTarget && Math.hypot(newX - snapTarget.x, newY - snapTarget.y) < 15) {
+                    if (snapTarget.type === 'waypoint' && snapTarget.wireId !== moveDragState.wireId) {
+                        const existingJunction = findJunctionByWaypoint(snapTarget.wireId, snapTarget.idx);
+                        if (existingJunction) {
+                            const already = existingJunction.waypoints.some(wp =>
+                                wp.wireId === moveDragState.wireId && wp.idx === moveDragState.idx
+                            );
+                            if (!already) {
+                                existingJunction.waypoints.push({ wireId: moveDragState.wireId, idx: moveDragState
+                                        .idx });
+                                updateJunctionPosition(existingJunction.id, snapTarget.x, snapTarget.y);
+                            }
+                        } else {
+                            createJunction(snapTarget.x, snapTarget.y, [
+                                { wireId: snapTarget.wireId, idx: snapTarget.idx },
+                                { wireId: moveDragState.wireId, idx: moveDragState.idx }
+                            ]);
+                        }
+                        wire.waypoints[moveDragState.idx].x = snapTarget.x;
+                        wire.waypoints[moveDragState.idx].y = snapTarget.y;
+                        redraw();
+                        showToast('Junction created', 600);
+                        return;
+                    }
+                    newX = snapTarget.x;
+                    newY = snapTarget.y;
+                }
+
+                wire.waypoints[moveDragState.idx].x = newX;
+                wire.waypoints[moveDragState.idx].y = newY;
+
+                const junction = findJunctionByWaypoint(moveDragState.wireId, moveDragState.idx);
+                if (junction) updateJunctionPosition(junction.id, newX, newY);
+                redraw();
+            }
+        }
+
+        function endMoveDrag() {
+            if (moveDragState) {
+                const wasJunction = moveDragState.type === 'junction';
+                moveDragState = null;
+                canvasWrap.style.cursor = 'default';
+                detectAndCreateJunctions();
+                showToast(wasJunction ? 'Junction moved' : 'Waypoint moved', 600);
+                redraw();
+            }
+        }
+
+        function findNearestSnapTarget(x, y, excludeWireId, excludeIdx) {
+            const points = getAllSnapPoints(excludeWireId, excludeIdx);
+            let best = null,
+                bestDist = 15;
+            for (const p of points) {
+                const d = Math.hypot(x - p.x, y - p.y);
+                if (d < bestDist) { bestDist = d;
+                    best = p; }
+            }
+            return best ? { ...best, dist: bestDist } : null;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  TOUCH ZOOM & PAN
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function handleTouchStart(e) {
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = canvasWrap.getBoundingClientRect();
+                const sx = touch.clientX - rect.left;
+                const sy = touch.clientY - rect.top;
+                touchAlignPoint = { x: sx, y: sy };
+                lastTouchPos = { x: sx, y: sy };
+                touchStartX = sx;
+                touchStartY = sy;
+                touchStartViewX = viewX;
+                touchStartViewY = viewY;
+                touchPanActive = false;
+            } else if (e.touches.length === 2) {
+                const t1 = e.touches[0],
+                    t2 = e.touches[1];
+                const rect = canvasWrap.getBoundingClientRect();
+                const dx = (t1.clientX - t2.clientX);
+                const dy = (t1.clientY - t2.clientY);
+                lastTouchDist = Math.hypot(dx, dy);
+                touchStartZoom = zoom;
+                const cx = (t1.clientX + t2.clientX) / 2 - rect.left;
+                const cy = (t1.clientY + t2.clientY) / 2 - rect.top;
+                const worldCenter = screenToWorld(cx, cy);
+                touchStartViewX = viewX;
+                touchStartViewY = viewY;
+                touchPanActive = false;
+                canvasWrap._zoomCenter = worldCenter;
+                canvasWrap._zoomCenterScreen = { x: cx, y: cy };
+                touchAlignPoint = { x: cx, y: cy };
+            }
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = canvasWrap.getBoundingClientRect();
+                const sx = touch.clientX - rect.left;
+                const sy = touch.clientY - rect.top;
+                touchAlignPoint = { x: sx, y: sy };
+                lastTouchPos = { x: sx, y: sy };
+
+                if (!dragState && !moveDragState && !isDrawingWire) {
+                    const dx = sx - touchStartX;
+                    const dy = sy - touchStartY;
+                    if (Math.hypot(dx, dy) > 10) {
+                        touchPanActive = true;
+                        viewX = touchStartViewX - dx / zoom;
+                        viewY = touchStartViewY - dy / zoom;
+                        updateComponentTransforms();
+                        updateCanvasSize();
+                        redraw();
+                        updateZoomIndicator();
+                    }
+                }
+            } else if (e.touches.length === 2) {
+                const t1 = e.touches[0],
+                    t2 = e.touches[1];
+                const dx = (t1.clientX - t2.clientX);
+                const dy = (t1.clientY - t2.clientY);
+                const dist = Math.hypot(dx, dy);
+                if (lastTouchDist > 0) {
+                    const scale = dist / lastTouchDist;
+                    const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, touchStartZoom * scale));
+                    if (newZoom !== zoom) {
+                        const center = canvasWrap._zoomCenter;
+                        const cx = canvasWrap._zoomCenterScreen.x;
+                        const cy = canvasWrap._zoomCenterScreen.y;
+                        const worldBefore = screenToWorld(cx, cy);
+                        zoom = newZoom;
+                        const worldAfter = screenToWorld(cx, cy);
+                        viewX += worldBefore.x - worldAfter.x;
+                        viewY += worldBefore.y - worldAfter.y;
+                        updateComponentTransforms();
+                        updateCanvasSize();
+                        redraw();
+                        updateZoomIndicator();
+                    }
+                }
+                lastTouchDist = dist;
+            }
+        }
+
+        function handleTouchEnd(e) {
+            if (e.touches.length === 0) {
+                if (touchPanActive) {
+                    touchPanActive = false;
+                }
+                touchAlignPoint = null;
+            }
+            if (e.touches.length === 1) {
+                touchPanActive = false;
+            }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  CANVAS EVENT HANDLERS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        canvasWrap.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.c-node')) return;
+            const pos = getMousePos(e);
+            const wx = screenToWorld(pos.x, pos.y);
+
+            if (currentMode === 'move') {
+                startMoveDrag(e);
+                return;
+            }
+
+            if (currentMode === 'wire') {
+                const wpHit = hitTestWaypointGlobal(wx.x, wx.y);
+                if (wpHit) {
+                    const junction = findJunctionByWaypoint(wpHit.wireId, wpHit.idx);
+                    if (junction) {
+                        if (!isDrawingWire) {
+                            isDrawingWire = true;
+                            wireStartPoint = { type: 'junction', x: junction.x, y: junction.y, junctionId: junction.id };
+                            wireWaypoints = [];
+                            showToast('Started from junction — tap canvas for waypoints', 2000);
+                            redraw();
+                        } else {
+                            finishWire({ type: 'junction', x: junction.x, y: junction.y });
+                        }
+                        return;
+                    }
+                    handleWaypointClick(wpHit.wireId, wpHit.idx, wpHit.x, wpHit.y);
+                    return;
+                }
+
+                const wireHit = hitTestWire(wx.x, wx.y);
+                if (wireHit !== null) {
+                    if (isDrawingWire) {
+                        const newIdx = splitWireAtPoint(wireHit, wx.x, wx.y);
+                        if (newIdx !== false) {
+                            const wire = wires.find(w => w.id === wireHit);
+                            if (wire && wire.waypoints[newIdx]) {
+                                const wp = wire.waypoints[newIdx];
+                                finishWire({ type: 'waypoint', wireId: wireHit, idx: newIdx, x: wp.x, y: wp.y });
+                            }
+                        } else {
+                            showToast('Tap point too close to existing waypoint', 800);
+                        }
+                        return;
+                    } else {
+                        if (selectedWireId === wireHit) {
+                            if (splitWireAtPoint(wireHit, wx.x, wx.y)) {
+                                detectAndCreateJunctions();
+                                redraw();
+                                return;
+                            }
+                        }
+                        selectedWireId = wireHit;
+                        redraw();
+                        showToast('Wire selected — double-click to add waypoint', 800);
+                        return;
+                    }
+                }
+
+                if (isDrawingWire) {
+                    if (wireWaypoints.length >= 1) {
+                        const first = wireWaypoints[0];
+                        if (Math.hypot(wx.x - first.x, wx.y - first.y) < CLOSE_DIST) {
+                            if (wireStartPoint) { finishWire(wireStartPoint); return; }
+                        }
+                    }
+                    addWaypoint(wx.x, wx.y);
+                    return;
+                }
+
+                if (selectedWireId !== null) {
+                    selectedWireId = null;
+                    redraw();
+                }
+                return;
+            }
+
+            if (currentMode === 'delete') {
+                const wpHit = hitTestWaypointGlobal(wx.x, wx.y);
+                if (wpHit) {
+                    const junction = findJunctionByWaypoint(wpHit.wireId, wpHit.idx);
+                    if (junction) {
+                        if (confirm('Delete this junction and all connected wires?')) {
+                            const toRemove = [];
+                            for (const wp of junction.waypoints) {
+                                if (!toRemove.includes(wp.wireId)) toRemove.push(wp.wireId);
+                            }
+                            for (const wid of toRemove) removeWire(wid);
+                            showToast('Junction deleted');
+                        }
+                        return;
+                    }
+                    const wire = wires.find(w => w.id === wpHit.wireId);
+                    if (wire) {
+                        if (wire.waypoints.length <= 1) {
+                            removeWire(wpHit.wireId);
+                            showToast('Wire removed (last waypoint)');
+                        } else {
+                            wire.waypoints.splice(wpHit.idx, 1);
+                            detectAndCreateJunctions();
+                            showToast('Waypoint removed');
+                            redraw();
+                        }
+                    }
+                    return;
+                }
+                const hit = hitTestWire(wx.x, wx.y);
+                if (hit !== null) {
+                    if (confirm('Delete this wire?')) {
+                        removeWire(hit);
+                        selectedWireId = null;
+                        showToast('Wire deleted');
+                    }
+                }
+                return;
+            }
+        });
+
+        canvasWrap.addEventListener('mousemove', (e) => {
+            const pos = getMousePos(e);
+            window._lastMousePos = pos;
+
+            if (currentMode === 'move' && moveDragState) {
+                moveDragMove(e);
+                return;
+            }
+
+            if (currentMode === 'move') {
+                const wx = screenToWorld(pos.x, pos.y);
+                const wpHit = hitTestWaypointGlobal(wx.x, wx.y);
+                canvasWrap.style.cursor = wpHit ? 'grab' : (hitTestWire(wx.x, wx.y) ? 'crosshair' : 'default');
+                redraw();
+                return;
+            }
+
+            if (currentMode === 'wire') {
+                if (isDrawingWire) {
+                    const wx = screenToWorld(pos.x, pos.y);
+                    const wireHit = hitTestWire(wx.x, wx.y);
+                    if (wireHit) {
+                        canvasWrap.style.cursor = 'pointer';
+                    } else {
+                        canvasWrap.style.cursor = 'crosshair';
+                    }
+                } else {
+                    const wx = screenToWorld(pos.x, pos.y);
+                    const hit = hitTestWire(wx.x, wx.y);
+                    const wpHit = hitTestWaypointGlobal(wx.x, wx.y);
+                    canvasWrap.style.cursor = (hit || wpHit) ? 'pointer' : 'default';
+                }
+                redraw();
+                return;
+            }
+
+            if (currentMode === 'delete') {
+                const wx = screenToWorld(pos.x, pos.y);
+                canvasWrap.style.cursor = (hitTestWaypointGlobal(wx.x, wx.y) || hitTestWire(wx.x, wx.y)) ? 'pointer' :
+                    'default';
+                redraw();
+                return;
+            }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (moveDragState) endMoveDrag();
+            if (dragState) onDragEnd(e);
+        });
+
+        // ── Touch events ──
+
+        canvasWrap.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.c-node')) {
+                return;
+            }
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = canvasWrap.getBoundingClientRect();
+                const sx = touch.clientX - rect.left;
+                const sy = touch.clientY - rect.top;
+                const wx = screenToWorld(sx, sy);
+                touchAlignPoint = { x: sx, y: sy };
+                lastTouchPos = { x: sx, y: sy };
+                touchStartX = sx;
+                touchStartY = sy;
+                touchStartViewX = viewX;
+                touchStartViewY = viewY;
+                touchPanActive = false;
+
+                if (currentMode === 'wire') {
+                    const wpHit = hitTestWaypointGlobal(wx.x, wx.y);
+                    if (wpHit) {
+                        const junction = findJunctionByWaypoint(wpHit.wireId, wpHit.idx);
+                        if (junction) {
+                            if (!isDrawingWire) {
+                                isDrawingWire = true;
+                                wireStartPoint = { type: 'junction', x: junction.x, y: junction.y,
+                                    junctionId: junction.id };
+                                wireWaypoints = [];
+                                showToast('Started from junction', 1500);
+                                redraw();
+                            } else {
+                                finishWire({ type: 'junction', x: junction.x, y: junction.y });
+                            }
+                            e.preventDefault();
+                            return;
+                        }
+                        handleWaypointClick(wpHit.wireId, wpHit.idx, wpHit.x, wpHit.y);
+                        e.preventDefault();
+                        return;
+                    }
+
+                    const wireHit = hitTestWire(wx.x, wx.y);
+                    if (wireHit !== null) {
+                        if (isDrawingWire) {
+                            const newIdx = splitWireAtPoint(wireHit, wx.x, wx.y);
+                            if (newIdx !== false) {
+                                const wire = wires.find(w => w.id === wireHit);
+                                if (wire && wire.waypoints[newIdx]) {
+                                    const wp = wire.waypoints[newIdx];
+                                    finishWire({ type: 'waypoint', wireId: wireHit, idx: newIdx, x: wp.x, y: wp
+                                        .y });
+                                }
+                            } else {
+                                showToast('Tap point too close to existing waypoint', 800);
+                            }
+                            e.preventDefault();
+                            return;
+                        } else {
+                            if (selectedWireId === wireHit) {
+                                if (splitWireAtPoint(wireHit, wx.x, wx.y)) {
+                                    detectAndCreateJunctions();
+                                    redraw();
+                                    e.preventDefault();
+                                    return;
+                                }
+                            }
+                            selectedWireId = wireHit;
+                            redraw();
+                            showToast('Wire selected — double-tap to add waypoint', 800);
+                            e.preventDefault();
+                            return;
+                        }
+                    }
+
+                    if (isDrawingWire) {
+                        if (wireWaypoints.length >= 1) {
+                            const first = wireWaypoints[0];
+                            if (Math.hypot(wx.x - first.x, wx.y - first.y) < CLOSE_DIST) {
+                                if (wireStartPoint) { finishWire(wireStartPoint);
+                                    e.preventDefault(); return; }
+                            }
+                        }
+                        addWaypoint(wx.x, wx.y);
+                        e.preventDefault();
+                        return;
+                    }
+                }
+
+                if (currentMode === 'delete') {
+                    const wpHit = hitTestWaypointGlobal(wx.x, wx.y);
+                    if (wpHit) {
+                        const junction = findJunctionByWaypoint(wpHit.wireId, wpHit.idx);
+                        if (junction) {
+                            if (confirm('Delete this junction and all connected wires?')) {
+                                const toRemove = [];
+                                for (const wp of junction.waypoints) {
+                                    if (!toRemove.includes(wp.wireId)) toRemove.push(wp.wireId);
+                                }
+                                for (const wid of toRemove) removeWire(wid);
+                                showToast('Junction deleted');
+                            }
+                            e.preventDefault();
+                            return;
+                        }
+                        const wire = wires.find(w => w.id === wpHit.wireId);
+                        if (wire) {
+                            if (wire.waypoints.length <= 1) {
+                                removeWire(wpHit.wireId);
+                                showToast('Wire removed (last waypoint)');
+                            } else {
+                                wire.waypoints.splice(wpHit.idx, 1);
+                                detectAndCreateJunctions();
+                                showToast('Waypoint removed');
+                                redraw();
+                            }
+                            e.preventDefault();
+                            return;
+                        }
+                    }
+                    const hit = hitTestWire(wx.x, wx.y);
+                    if (hit !== null) {
+                        if (confirm('Delete this wire?')) {
+                            removeWire(hit);
+                            selectedWireId = null;
+                            showToast('Wire deleted');
+                        }
+                        e.preventDefault();
+                        return;
+                    }
+                }
+
+                if (currentMode === 'move') {
+                    startMoveDrag({ clientX: touch.clientX, clientY: touch.clientY });
+                    e.preventDefault();
+                    return;
+                }
+            } else if (e.touches.length === 2) {
+                handleTouchStart(e);
+            }
+        }, { passive: false });
+
+        canvasWrap.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = canvasWrap.getBoundingClientRect();
+                const sx = touch.clientX - rect.left;
+                const sy = touch.clientY - rect.top;
+                touchAlignPoint = { x: sx, y: sy };
+                lastTouchPos = { x: sx, y: sy };
+
+                if (!dragState && !moveDragState && !isDrawingWire) {
+                    const dx = sx - touchStartX;
+                    const dy = sy - touchStartY;
+                    if (Math.hypot(dx, dy) > 10) {
+                        touchPanActive = true;
+                        viewX = touchStartViewX - dx / zoom;
+                        viewY = touchStartViewY - dy / zoom;
+                        updateComponentTransforms();
+                        updateCanvasSize();
+                        redraw();
+                        updateZoomIndicator();
+                    }
+                }
+                redraw();
+                e.preventDefault();
+            } else if (e.touches.length === 2) {
+                handleTouchMove(e);
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        canvasWrap.addEventListener('touchend', (e) => {
+            if (e.touches.length === 0) {
+                if (touchPanActive) {
+                    touchPanActive = false;
+                }
+                touchAlignPoint = null;
+                if (moveDragState) endMoveDrag();
+                if (dragState) {
+                    const node = getNode(dragState.nodeId);
+                    if (node) node.el.classList.remove('dragging');
+                    dragState = null;
+                    updateCanvasSize();
+                    redraw();
+                }
+            }
+            if (e.touches.length === 1) {
+                touchPanActive = false;
+            }
+        }, { passive: false });
+
+        canvasWrap.addEventListener('touchcancel', (e) => {
+            touchPanActive = false;
+            touchAlignPoint = null;
+            if (moveDragState) endMoveDrag();
+            if (dragState) {
+                const node = getNode(dragState.nodeId);
+                if (node) node.el.classList.remove('dragging');
+                dragState = null;
+                updateCanvasSize();
+                redraw();
+            }
+        }, { passive: false });
+
+        // ── Double-click / Double-tap ──
+
+        canvasWrap.addEventListener('dblclick', (e) => {
+            if (e.target.closest('.c-node')) return;
+            if (isDrawingWire) return;
+            const pos = getMousePos(e);
+            const wx = screenToWorld(pos.x, pos.y);
+            handleDoubleClickWaypoint(wx.x, wx.y);
+        });
+
+        let lastTapTime = 0;
+        let lastTapPos = null;
+
+        canvasWrap.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = canvasWrap.getBoundingClientRect();
+                const sx = touch.clientX - rect.left;
+                const sy = touch.clientY - rect.top;
+                const now = Date.now();
+                if (now - lastTapTime < 400 && lastTapPos) {
+                    const dx = sx - lastTapPos.x;
+                    const dy = sy - lastTapPos.y;
+                    if (Math.hypot(dx, dy) < 30) {
+                        const wx = screenToWorld(sx, sy);
+                        handleDoubleClickWaypoint(wx.x, wx.y);
+                        e.preventDefault();
+                    }
+                }
+                lastTapTime = now;
+                lastTapPos = { x: sx, y: sy };
+            }
+        }, { passive: true });
+
+        function handleDoubleClickWaypoint(x, y) {
+            const wpHit = hitTestWaypointGlobal(x, y);
+            if (wpHit) {
+                selectedWireId = wpHit.wireId;
+                redraw();
+                showToast(`Waypoint ${String.fromCharCode(65 + wpHit.idx)} selected`, 600);
+                return;
+            }
+
+            for (const node of nodes) {
+                for (const [term, termPos] of Object.entries(node.terminals)) {
+                    const tp = getTerminalPosition(node, term);
+                    if (Math.hypot(x - tp.x, y - tp.y) < WP_HIT) {
+                        selectedWireId = null;
+                        redraw();
+                        showToast('Terminal selected — tap to connect', 600);
+                        return;
+                    }
+                }
+            }
+
+            const wireId = hitTestWire(x, y);
+            if (wireId === null) {
+                showToast('Tap on a wire to add a waypoint', 800);
+                return;
+            }
+
+            const wire = wires.find(w => w.id === wireId);
+            if (!wire) {
+                showToast('Wire not found', 800);
+                return;
+            }
+
+            let pts = getWirePoints(wire);
+            if (!pts || pts.length < 2) {
+                showToast('Cannot add waypoint to this wire', 1200);
+                return;
+            }
+
+            let bestSeg = -1,
+                bestDist = Infinity;
+            for (let i = 0; i < pts.length - 1; i++) {
+                const d = distToSegment(x, y, pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y);
+                if (d < bestDist) { bestDist = d;
+                    bestSeg = i; }
+            }
+
+            if (bestSeg < 0 || bestSeg >= pts.length - 1) {
+                showToast('Could not find a segment to split', 800);
+                return;
+            }
+
+            const segStart = pts[bestSeg];
+            const segEnd = pts[bestSeg + 1];
+            const dStart = Math.hypot(x - segStart.x, y - segStart.y);
+            const dEnd = Math.hypot(x - segEnd.x, y - segEnd.y);
+            if (dStart < 8 || dEnd < 8) {
+                showToast('Too close to existing point', 800);
+                return;
+            }
+
+            const dx = Math.abs(segEnd.x - segStart.x);
+            const dy = Math.abs(segEnd.y - segStart.y);
+            let snapX = x,
+                snapY = y;
+            if (dx > dy) {
+                snapX = x;
+                snapY = segStart.y;
+            } else {
+                snapX = segStart.x;
+                snapY = y;
+            }
+
+            const allPoints = getAllSnapPoints(undefined, undefined, undefined);
+            for (const p of allPoints) {
+                if (Math.hypot(snapX - p.x, snapY - p.y) < 5) {
+                    showToast('Waypoint would overlap an existing point', 1200);
+                    return;
+                }
+            }
+
+            let insertIdx;
+            if (bestSeg === 0) {
+                insertIdx = 0;
+            } else if (bestSeg >= pts.length - 1) {
+                insertIdx = wire.waypoints.length;
+            } else {
+                const hasStartTerminal = (wire.fromNodeId !== -1 && getNode(wire.fromNodeId));
+                if (hasStartTerminal) {
+                    insertIdx = bestSeg;
+                } else {
+                    insertIdx = bestSeg;
+                }
+                insertIdx = Math.max(0, Math.min(wire.waypoints.length, insertIdx));
+            }
+
+            wire.waypoints.splice(insertIdx, 0, { x: snapX, y: snapY });
+
+            selectedWireId = wire.id;
+            redraw();
+            showToast('Waypoint added', 800);
+        }
+
+        // ── Keyboard ──
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (isDrawingWire) { cancelWire();
+                    showToast('Cancelled', 600); }
+                if (moveDragState) endMoveDrag();
+                if (dragState) dragState = null;
+                selectedWireId = null;
+                redraw();
+            }
+            if ((e.key === 'Delete' || e.key === 'Backspace') && currentMode === 'delete') {
+                if (selectedWireId !== null) {
+                    removeWire(selectedWireId);
+                    selectedWireId = null;
+                    showToast('Wire deleted');
+                }
+            }
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  ZOOM CONTROLS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        document.getElementById('zoomIn').addEventListener('click', () => {
+            const center = { x: canvasWrap.clientWidth / 2, y: canvasWrap.clientHeight / 2 };
+            const worldBefore = screenToWorld(center.x, center.y);
+            zoom = Math.min(MAX_ZOOM, zoom * 1.25);
+            const worldAfter = screenToWorld(center.x, center.y);
+            viewX += worldBefore.x - worldAfter.x;
+            viewY += worldBefore.y - worldAfter.y;
+            updateComponentTransforms();
+            updateCanvasSize();
+            redraw();
+            updateZoomIndicator();
+        });
+
+        document.getElementById('zoomOut').addEventListener('click', () => {
+            const center = { x: canvasWrap.clientWidth / 2, y: canvasWrap.clientHeight / 2 };
+            const worldBefore = screenToWorld(center.x, center.y);
+            zoom = Math.max(MIN_ZOOM, zoom / 1.25);
+            const worldAfter = screenToWorld(center.x, center.y);
+            viewX += worldBefore.x - worldAfter.x;
+            viewY += worldBefore.y - worldAfter.y;
+            updateComponentTransforms();
+            updateCanvasSize();
+            redraw();
+            updateZoomIndicator();
+        });
+
+        document.getElementById('zoomReset').addEventListener('click', () => {
+            zoom = 1.0;
+            viewX = 0;
+            viewY = 0;
+            updateComponentTransforms();
+            updateCanvasSize();
+            redraw();
+            updateZoomIndicator();
+        });
+
+        function updateZoomIndicator() {
+            document.getElementById('zoomIndicator').textContent = Math.round(zoom * 100) + '%';
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  RENDER
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function updateCanvasSize() {
+            const rect = canvasWrap.getBoundingClientRect();
+            const w = rect.width;
+            const h = rect.height;
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            wireCanvas.width = w * dpr;
+            wireCanvas.height = h * dpr;
+            wireCanvas.style.width = w + 'px';
+            wireCanvas.style.height = h + 'px';
+            wireCanvas._w = w;
+            wireCanvas._h = h;
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.scale(dpr, dpr);
+        }
+
+        function formatLength(inches) {
+            if (inches < 0) return '-' + formatLength(-inches);
+            if (inches < 12) return inches.toFixed(1) + '"';
+            const feet = Math.floor(inches / 12);
+            const rem = inches - feet * 12;
+            if (rem < 0.05) return feet + "'";
+            return feet + "' " + rem.toFixed(1) + '"';
+        }
+
+        function drawRoundedPolyline(ctx, pts, radius, color, width, dash) {
+            if (pts.length < 2) return;
+            ctx.save();
+            if (dash) ctx.setLineDash(dash);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width * Math.min(1, zoom);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            const first = { x: (pts[0].x - viewX) * zoom, y: (pts[0].y - viewY) * zoom };
+            ctx.moveTo(first.x, first.y);
+            for (let i = 1; i < pts.length - 1; i++) {
+                const p0 = pts[i - 1],
+                    p1 = pts[i],
+                    p2 = pts[i + 1];
+                const dx1 = p1.x - p0.x,
+                    dy1 = p1.y - p0.y;
+                const dx2 = p2.x - p1.x,
+                    dy2 = p2.y - p1.y;
+                const len1 = Math.hypot(dx1, dy1),
+                    len2 = Math.hypot(dx2, dy2);
+                if (len1 > 1 && len2 > 1) {
+                    const angle = Math.atan2(dy2, dx2) - Math.atan2(dy1, dx1);
+                    const deg = Math.abs(angle * 180 / Math.PI);
+                    if (Math.abs(deg - 90) < 20 || Math.abs(deg - 270) < 20) {
+                        const r = Math.min(radius * Math.min(1, zoom), len1 / 2 * zoom, len2 / 2 * zoom);
+                        const p1s = { x: (p1.x - viewX) * zoom, y: (p1.y - viewY) * zoom };
+                        const p2s = { x: (p2.x - viewX) * zoom, y: (p2.y - viewY) * zoom };
+                        ctx.arcTo(p1s.x, p1s.y, p2s.x, p2s.y, r);
+                        continue;
+                    }
+                }
+                const ps = { x: (p1.x - viewX) * zoom, y: (p1.y - viewY) * zoom };
+                ctx.lineTo(ps.x, ps.y);
+            }
+            const last = { x: (pts[pts.length - 1].x - viewX) * zoom, y: (pts[pts.length - 1].y - viewY) * zoom };
+            ctx.lineTo(last.x, last.y);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function redraw() {
+            const w = wireCanvas._w || 1200,
+                h = wireCanvas._h || 900;
+            ctx.clearRect(0, 0, w, h);
+
+            // ── Grid (scaled) ──
+            drawZoomedGrid(ctx, w, h);
+
+            // ── Wires ──
+            for (const wire of wires) {
+                const pts = getWirePoints(wire);
+                if (!pts || pts.length < 2) continue;
+                const isSelected = (selectedWireId === wire.id);
+                const isMoving = (moveDragState && moveDragState.type === 'waypoint' && moveDragState.wireId === wire.id);
+                const color = isSelected ? '#2563eb' : (isMoving ? '#4a90d9' : '#1e293b');
+                const width = (isSelected || isMoving) ? 3.5 : 2.5;
+                drawRoundedPolyline(ctx, pts, ROUND_RADIUS, color, width, null);
+
+                const first = { x: (pts[0].x - viewX) * zoom, y: (pts[0].y - viewY) * zoom };
+                const last = { x: (pts[pts.length - 1].x - viewX) * zoom, y: (pts[pts.length - 1].y - viewY) * zoom };
+                ctx.fillStyle = color;
+                const r = 3 * Math.min(1, zoom);
+                ctx.beginPath();
+                ctx.arc(first.x, first.y, r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(last.x, last.y, r, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (isSelected) {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(37,99,235,0.08)';
+                    ctx.lineWidth = 14 * Math.min(1, zoom);
+                    ctx.beginPath();
+                    const p0 = { x: (pts[0].x - viewX) * zoom, y: (pts[0].y - viewY) * zoom };
+                    ctx.moveTo(p0.x, p0.y);
+                    for (let i = 1; i < pts.length; i++) {
+                        const pi = { x: (pts[i].x - viewX) * zoom, y: (pts[i].y - viewY) * zoom };
+                        ctx.lineTo(pi.x, pi.y);
+                    }
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            // ── Junctions ──
+            for (const j of junctions) {
+                const isMoving = (moveDragState && moveDragState.type === 'junction' && moveDragState.junctionId === j.id);
+                const sx = (j.x - viewX) * zoom,
+                    sy = (j.y - viewY) * zoom;
+                const r = (isMoving ? 12 : 10) * Math.min(1, zoom);
+                ctx.save();
+                ctx.fillStyle = isMoving ? '#4a90d9' : '#e07b4c';
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 3 * Math.min(1, zoom);
+                ctx.shadowColor = isMoving ? 'rgba(74,144,217,0.5)' : 'rgba(224,123,76,0.4)';
+                ctx.shadowBlur = (isMoving ? 20 : 10) * Math.min(1, zoom);
+                ctx.beginPath();
+                ctx.arc(sx, sy, r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                ctx.restore();
+                ctx.fillStyle = '#fff';
+                ctx.font = `bold ${10*Math.min(1, zoom)}px "Segoe UI", Arial, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(isMoving ? '✦' : '⚡', sx, sy + 0.5);
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.font = `${8*Math.min(1, zoom)}px "Segoe UI", Arial, sans-serif`;
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText(`${j.waypoints.length} wires`, sx + 14 * Math.min(1, zoom), sy - 8 * Math.min(1, zoom));
+            }
+
+            // ── Waypoints ──
+            for (const wire of wires) {
+                const isSelected = (selectedWireId === wire.id);
+                for (let i = 0; i < wire.waypoints.length; i++) {
+                    const wp = wire.waypoints[i];
+                    const junction = findJunctionByWaypoint(wire.id, i);
+                    if (junction) continue;
+
+                    const isMovingPoint = (moveDragState && moveDragState.type === 'waypoint' &&
+                        moveDragState.wireId === wire.id && moveDragState.idx === i);
+                    const sx = (wp.x - viewX) * zoom,
+                        sy = (wp.y - viewY) * zoom;
+
+                    if (isDrawingWire) {
+                        const isStart = (wireStartPoint && wireStartPoint.x === wp.x && wireStartPoint.y === wp.y);
+                        const r = (isStart ? 11 : 8) * Math.min(1, zoom);
+                        ctx.save();
+                        ctx.fillStyle = isStart ? '#16a34a' : '#4a90d9';
+                        ctx.strokeStyle = '#fff';
+                        ctx.lineWidth = 2.5 * Math.min(1, zoom);
+                        ctx.shadowColor = isStart ? 'rgba(22,163,74,0.5)' : 'rgba(74,144,217,0.3)';
+                        ctx.shadowBlur = (isStart ? 15 : 8) * Math.min(1, zoom);
+                        ctx.beginPath();
+                        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+                        ctx.restore();
+                        ctx.fillStyle = '#fff';
+                        ctx.font = `bold ${9*Math.min(1, zoom)}px "Segoe UI", Arial, sans-serif`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(isStart ? '★' : String.fromCharCode(65 + i), sx, sy + 0.5);
+                        continue;
+                    }
+
+                    if (currentMode === 'move') {
+                        const isHovered = (moveDragState && moveDragState.type === 'waypoint' &&
+                            moveDragState.wireId === wire.id && moveDragState.idx === i);
+                        const r = (isHovered ? 11 : 7) * Math.min(1, zoom);
+                        ctx.save();
+                        ctx.fillStyle = isHovered ? '#4a90d9' : (isSelected ? '#4a90d9' : '#4a90d9');
+                        ctx.strokeStyle = '#fff';
+                        ctx.lineWidth = 2.5 * Math.min(1, zoom);
+                        ctx.shadowColor = isHovered ? 'rgba(74,144,217,0.5)' : 'rgba(74,144,217,0.2)';
+                        ctx.shadowBlur = (isHovered ? 18 : 6) * Math.min(1, zoom);
+                        ctx.beginPath();
+                        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+                        ctx.restore();
+                        ctx.fillStyle = '#fff';
+                        ctx.font = `bold ${9*Math.min(1, zoom)}px "Segoe UI", Arial, sans-serif`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(isHovered ? '✦' : String.fromCharCode(65 + i), sx, sy + 0.5);
+                        if (isHovered) {
+                            ctx.save();
+                            ctx.fillStyle = '#4a90d9';
+                            ctx.font = `bold ${10*Math.min(1, zoom)}px "Segoe UI", Arial, sans-serif`;
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'bottom';
+                            ctx.fillText('drag me', sx, sy - 16 * Math.min(1, zoom));
+                            ctx.restore();
+                        }
+                        continue;
+                    }
+
+                    if (isSelected) {
+                        const r = (isMovingPoint ? 11 : 7) * Math.min(1, zoom);
+                        ctx.save();
+                        ctx.fillStyle = isMovingPoint ? '#4a90d9' : '#4a90d9';
+                        ctx.strokeStyle = '#fff';
+                        ctx.lineWidth = 2 * Math.min(1, zoom);
+                        ctx.shadowColor = isMovingPoint ? 'rgba(74,144,217,0.5)' : 'rgba(74,144,217,0.2)';
+                        ctx.shadowBlur = (isMovingPoint ? 18 : 6) * Math.min(1, zoom);
+                        ctx.beginPath();
+                        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+                        ctx.restore();
+                        ctx.fillStyle = '#fff';
+                        ctx.font = `bold ${10*Math.min(1, zoom)}px "Segoe UI", Arial, sans-serif`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(isMovingPoint ? '✦' : String.fromCharCode(65 + i), sx, sy + 0.5);
+                    }
+                }
+            }
+
+            // ── Distance labels ──
+            const labelZoom = Math.min(1, zoom);
+            for (const wire of wires) {
+                const pts = getWirePoints(wire);
+                if (!pts || pts.length < 2) continue;
+                for (let i = 0; i < pts.length - 1; i++) {
+                    const p1 = pts[i],
+                        p2 = pts[i + 1];
+                    const sx = (p1.x + p2.x) / 2,
+                        sy = (p1.y + p2.y) / 2;
+                    const mx = (sx - viewX) * zoom,
+                        my = (sy - viewY) * zoom;
+                    const d = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+                    if (d > 2 && zoom > 0.3) {
+                        const label = formatLength(d);
+                        ctx.save();
+                        ctx.font = `${10*labelZoom}px "Segoe UI", Arial, sans-serif`;
+                        const m = ctx.measureText(label);
+                        const pad = 6 * labelZoom,
+                            pw = m.width + pad * 2,
+                            ph = 18 * labelZoom;
+                        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                        ctx.beginPath();
+                        ctx.rect(mx - pw / 2, my - ph / 2, pw, ph);
+                        ctx.fill();
+                        ctx.strokeStyle = '#ccc';
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                        ctx.fillStyle = '#333';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(label, mx, my);
+                        ctx.restore();
+                    }
+                }
+            }
+
+            // ── Alignment Guides ──
+            let alignSource = null;
+            if (window._lastMousePos) {
+                alignSource = window._lastMousePos;
+            } else if (touchAlignPoint) {
+                alignSource = touchAlignPoint;
+            }
+
+            if (alignSource && (currentMode === 'wire' || currentMode === 'move' || isDrawingWire || dragState || moveDragState)) {
+                const sx = alignSource.x;
+                const sy = alignSource.y;
+                const excludeNodeId = dragState ? dragState.nodeId : undefined;
+                const excludeWireId = moveDragState && moveDragState.type === 'waypoint' ? moveDragState.wireId : undefined;
+                const excludeIdx = moveDragState && moveDragState.type === 'waypoint' ? moveDragState.idx : undefined;
+                drawAlignmentGuides(ctx, sx, sy, w, h, excludeWireId, excludeIdx, excludeNodeId);
+            }
+
+            // ── Drawing preview ──
+            if (isDrawingWire && wireStartPoint) {
+                let pts = [];
+                if (wireStartPoint.type === 'terminal') {
+                    const node = getNode(wireStartPoint.nodeId);
+                    if (node) pts.push(getTerminalPosition(node, wireStartPoint.term));
+                } else if (wireStartPoint.type === 'junction') {
+                    pts.push({ x: wireStartPoint.x, y: wireStartPoint.y });
+                } else {
+                    pts.push({ x: wireStartPoint.x, y: wireStartPoint.y });
+                }
+                for (const wp of wireWaypoints) pts.push({ x: wp.x, y: wp.y });
+
+                let mouseWorld = null;
+                if (window._lastMousePos) {
+                    mouseWorld = screenToWorld(window._lastMousePos.x, window._lastMousePos.y);
+                } else if (touchAlignPoint) {
+                    mouseWorld = screenToWorld(touchAlignPoint.x, touchAlignPoint.y);
+                }
+                if (mouseWorld) {
+                    if (pts.length > 0) {
+                        const last = pts[pts.length - 1];
+                        const dx = Math.abs(mouseWorld.x - last.x);
+                        const dy = Math.abs(mouseWorld.y - last.y);
+                        let snapX, snapY;
+                        if (dx < dy) { snapX = last.x;
+                            snapY = mouseWorld.y; } else { snapX = mouseWorld.x;
+                            snapY = last.y; }
+                        pts.push({ x: snapX, y: snapY });
+                    } else {
+                        pts.push({ x: mouseWorld.x, y: mouseWorld.y });
+                    }
+                }
+
+                if (pts.length > 1) {
+                    ctx.save();
+                    ctx.setLineDash([6, 4]);
+                    ctx.strokeStyle = '#2563eb';
+                    ctx.lineWidth = 2.5 * Math.min(1, zoom);
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.beginPath();
+                    const p0 = { x: (pts[0].x - viewX) * zoom, y: (pts[0].y - viewY) * zoom };
+                    ctx.moveTo(p0.x, p0.y);
+                    for (let i = 1; i < pts.length; i++) {
+                        const pi = { x: (pts[i].x - viewX) * zoom, y: (pts[i].y - viewY) * zoom };
+                        ctx.lineTo(pi.x, pi.y);
+                    }
+                    ctx.stroke();
+                    ctx.restore();
+                }
+                for (let i = 0; i < wireWaypoints.length; i++) {
+                    const wp = wireWaypoints[i];
+                    const sx = (wp.x - viewX) * zoom,
+                        sy = (wp.y - viewY) * zoom;
+                    const r = 7 * Math.min(1, zoom);
+                    ctx.save();
+                    ctx.fillStyle = '#4a90d9';
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2 * Math.min(1, zoom);
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, r, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                    ctx.fillStyle = '#fff';
+                    ctx.font = `bold ${10*Math.min(1, zoom)}px "Segoe UI", Arial, sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(wp.letter || String.fromCharCode(65 + i), sx, sy + 0.5);
+                }
+                if (wireStartPoint) {
+                    const sx = (wireStartPoint.x - viewX) * zoom,
+                        sy = (wireStartPoint.y - viewY) * zoom;
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(22,163,74,0.15)';
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, 18 * Math.min(1, zoom), 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#16a34a';
+                    ctx.lineWidth = 2.5 * Math.min(1, zoom);
+                    ctx.setLineDash([4, 4]);
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, 14 * Math.min(1, zoom), 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            updateInfo();
+            updateZoomIndicator();
+        }
+
+        function drawZoomedGrid(ctx, w, h) {
+            const topLeft = screenToWorld(0, 0);
+            const bottomRight = screenToWorld(w, h);
+            const gridSize = 40 / zoom;
+
+            const xStart = Math.floor(topLeft.x / gridSize) * gridSize;
+            const yStart = Math.floor(topLeft.y / gridSize) * gridSize;
+            const xEnd = Math.ceil(bottomRight.x / gridSize) * gridSize;
+            const yEnd = Math.ceil(bottomRight.y / gridSize) * gridSize;
+
+            const majorGrid = gridSize * 2;
+            const minorColor = 'rgba(200,200,200,0.25)';
+            const majorColor = 'rgba(180,180,180,0.45)';
+
+            ctx.lineWidth = 0.5;
+            for (let x = xStart; x <= xEnd; x += gridSize) {
+                if (x % majorGrid === 0) continue;
+                const sx = (x - viewX) * zoom;
+                if (sx < -10 || sx > w + 10) continue;
+                ctx.strokeStyle = minorColor;
+                ctx.beginPath();
+                ctx.moveTo(sx, 0);
+                ctx.lineTo(sx, h);
+                ctx.stroke();
+            }
+            for (let y = yStart; y <= yEnd; y += gridSize) {
+                if (y % majorGrid === 0) continue;
+                const sy = (y - viewY) * zoom;
+                if (sy < -10 || sy > h + 10) continue;
+                ctx.strokeStyle = minorColor;
+                ctx.beginPath();
+                ctx.moveTo(0, sy);
+                ctx.lineTo(w, sy);
+                ctx.stroke();
+            }
+
+            ctx.lineWidth = 1.2;
+            for (let x = xStart; x <= xEnd; x += majorGrid) {
+                const sx = (x - viewX) * zoom;
+                if (sx < -10 || sx > w + 10) continue;
+                ctx.strokeStyle = majorColor;
+                ctx.beginPath();
+                ctx.moveTo(sx, 0);
+                ctx.lineTo(sx, h);
+                ctx.stroke();
+            }
+            for (let y = yStart; y <= yEnd; y += majorGrid) {
+                const sy = (y - viewY) * zoom;
+                if (sy < -10 || sy > h + 10) continue;
+                ctx.strokeStyle = majorColor;
+                ctx.beginPath();
+                ctx.moveTo(0, sy);
+                ctx.lineTo(w, sy);
+                ctx.stroke();
+            }
+        }
+
+        // ── Resize handler ──
+
+        function handleResize() {
+            updateCanvasSize();
+            updateComponentTransforms();
+            redraw();
+        }
+
+        window.addEventListener('resize', handleResize);
+        const ro = new ResizeObserver(() => { handleResize(); });
+        ro.observe(canvasWrap);
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  INFO
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function updateInfo() {
+            let html = '';
+            if (currentMode === 'wire') {
+                if (isDrawingWire) {
+                    html += `<div class="info-title">✏️ Drawing Wire</div>`;
+                    html +=
+                        `<div class="info-row"><span class="info-label">Points</span><span class="info-value">${wireWaypoints.length}</span></div>`;
+                    html +=
+                        `<div class="info-row"><span class="info-label">Status</span><span class="info-value">Tap wire or point to finish</span></div>`;
+                } else {
+                    html += `<div class="info-title">🔗 Wire Mode</div>`;
+                    if (selectedWireId !== null) {
+                        const wire = wires.find(w => w.id === selectedWireId);
+                        if (wire) {
+                            html +=
+                                `<div class="info-row"><span class="info-label">Selected</span><span class="info-value">${wire.waypoints.length} wp</span></div>`;
+                            html +=
+                                `<div class="info-row" style="color:#4a90d9;font-size:0.6rem;">Double-tap to add waypoint</div>`;
+                        }
+                    } else {
+                        html +=
+                            `<div class="info-row" style="color:#4a90d9;font-size:0.6rem;">Double-tap any wire to add waypoint</div>`;
+                    }
+                    html +=
+                        `<div class="info-row" style="color:#ff8800;font-size:0.6rem;">🟧 Alignment guides active</div>`;
+                }
+            } else if (currentMode === 'move') {
+                html += `<div class="info-title">✋ Move Mode</div>`;
+                if (moveDragState) {
+                    html +=
+                        `<div class="info-row"><span class="info-label">Moving</span><span class="info-value">${moveDragState.type}</span></div>`;
+                } else if (dragState) {
+                    html += `<div class="info-row"><span class="info-label">Moving</span><span class="info-value">Component</span></div>`;
+                } else {
+                    html +=
+                        `<div class="info-row" style="color:#4a90d9;font-size:0.6rem;">Drag component or waypoint</div>`;
+                }
+                html +=
+                    `<div class="info-row" style="color:#e07b4c;font-size:0.6rem;">⚡ Junction = moves connected</div>`;
+                html +=
+                    `<div class="info-row" style="color:#ff8800;font-size:0.6rem;">🟧 Alignment guides active</div>`;
+            } else if (currentMode === 'delete') {
+                html += `<div class="info-title">🗑️ Delete Mode</div>`;
+                html += `<div class="info-row"><span class="info-label">Action</span><span class="info-value">Tap to delete</span></div>`;
+            }
+            html +=
+                `<div class="info-row" style="color:#64748b;font-size:0.55rem;border-top:1px solid #ddd;padding-top:3px;margin-top:3px;">Pinch zoom · Two-finger pan</div>`;
+            document.getElementById('infoContent').innerHTML = html;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  EXPORT SVG
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function exportSVG() {
+            const w = 1200,
+                h = 900;
+            let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
+            <rect width="${w}" height="${h}" fill="#fff"/>
+            <style>
+              .breaker-body{fill:#fff;stroke:#111;stroke-width:1;stroke-linejoin:round;stroke-linecap:round;}
+              .fill-stroke{fill:#fff;stroke:#111;stroke-width:1;stroke-linejoin:round;stroke-linecap:round;}
+              .screw-circle{fill:#fff;stroke:#111;stroke-width:1;stroke-linejoin:round;stroke-linecap:round;}
+              .screw-cross{stroke:#111;stroke-width:1;stroke-linecap:round;}
+              .label{fill:#8d8a8abe;font-size:12px;font-weight:800;text-anchor:middle;dominant-baseline:middle;letter-spacing:-0.5px;user-select:none;}
+              .wire{stroke:#1e293b;stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+              .junction{fill:#e07b4c;stroke:#fff;stroke-width:2;}
+            </style>
+            <g id="wires">`;
+            for (const wire of wires) {
+                const pts = getWirePoints(wire);
+                if (!pts || pts.length < 2) continue;
+                let d = `M ${pts[0].x} ${pts[0].y}`;
+                for (let i = 1; i < pts.length; i++) d += ` L ${pts[i].x} ${pts[i].y}`;
+                svg += `<path class="wire" d="${d}"/>`;
+            }
+            svg += `</g><g id="junctions">`;
+            for (const j of junctions) {
+                svg += `<circle cx="${j.x}" cy="${j.y}" r="10" class="junction"/>`;
+                svg +=
+                    `<text x="${j.x}" y="${j.y}" fill="#fff" font-size="9" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central">⚡</text>`;
+            }
+            svg += `</g><g id="components">`;
+            for (const node of nodes) {
+                const def = COMP_TYPES[node.typeId];
+                if (!def) continue;
+                svg += `<g transform="translate(${node.x},${node.y})">${def.svg}`;
+                for (const [name, pos] of Object.entries(def.terminals)) {
+                    svg += `<circle cx="${pos.x}" cy="${pos.y}" r="9" fill="#2563eb" stroke="#fff" stroke-width="2"/>`;
+                }
+                svg += `</g>`;
+            }
+            svg += `</g></svg>`;
+            const blob = new Blob([svg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'electrical-diagram.svg';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('SVG exported!');
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  CLEAR
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function clearAll() {
+            if (nodes.length === 0 && wires.length === 0) return;
+            if (!confirm('Delete all components and wires?')) return;
+            for (const w of [...wires]) removeWire(w.id);
+            for (const n of [...nodes]) deleteNode(n.id);
+            junctions = [];
+            if (isDrawingWire) cancelWire();
+            selectedWireId = null;
+            moveDragState = null;
+            dragState = null;
+            updateCanvasSize();
+            redraw();
+            showToast('Cleared all');
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  MODE SWITCHING
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function setMode(mode) {
+            if (mode === currentMode) return;
+            if (isDrawingWire) cancelWire();
+            moveDragState = null;
+            dragState = null;
+            selectedWireId = null;
+            currentMode = mode;
+
+            document.getElementById('btnWire').className = mode === 'wire' ? 'active' : '';
+            document.getElementById('btnMove').className = mode === 'move' ? 'move-active' : '';
+            document.getElementById('btnDelete').className = mode === 'delete' ? 'delete-active' : '';
+
+            const modeNames = {
+                'wire': '🔗 Wire Mode — Double-tap wire to add waypoint',
+                'move': '✋ Move Mode — Drag components or waypoints',
+                'delete': '🗑️ Delete Mode — Tap to delete'
+            };
+            showToast(modeNames[mode] || '', 2000);
+            redraw();
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  INIT
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        buildPalette();
+
+        const mcb = addNode('mcb', 80, 120);
+        const rccb = addNode('rccb', 260, 120);
+        const sw = addNode('switch_mod', 460, 120);
+        const light = addNode('light', 600, 120);
+
+        setTimeout(() => {
+            const n1 = getNode(mcb.id);
+            const n2 = getNode(rccb.id);
+            if (n1 && n2) {
+                const from = getTerminalPosition(n1, 'bottom');
+                const to = getTerminalPosition(n2, 'top');
+                const midX = (from.x + to.x) / 2;
+                wires.push({
+                    id: nextId++,
+                    fromNodeId: n1.id,
+                    fromTerm: 'bottom',
+                    toNodeId: n2.id,
+                    toTerm: 'top',
+                    waypoints: [{ x: midX, y: from.y + 40 }]
+                });
+            }
+            const n2b = getNode(rccb.id);
+            const n3 = getNode(sw.id);
+            if (n2b && n3) {
+                const from = getTerminalPosition(n2b, 'bottom');
+                const to = getTerminalPosition(n3, 'top');
+                const midX = (from.x + to.x) / 2;
+                wires.push({
+                    id: nextId++,
+                    fromNodeId: n2b.id,
+                    fromTerm: 'bottom',
+                    toNodeId: n3.id,
+                    toTerm: 'top',
+                    waypoints: [{ x: midX, y: from.y + 40 }]
+                });
+            }
+            const n3b = getNode(sw.id);
+            const n4 = getNode(light.id);
+            if (n3b && n4) {
+                const from = getTerminalPosition(n3b, 'bottom');
+                const to = getTerminalPosition(n4, 'top');
+                const midX = (from.x + to.x) / 2;
+                wires.push({
+                    id: nextId++,
+                    fromNodeId: n3b.id,
+                    fromTerm: 'bottom',
+                    toNodeId: n4.id,
+                    toTerm: 'top',
+                    waypoints: [{ x: midX, y: from.y + 40 }]
+                });
+            }
+            detectAndCreateJunctions();
+            updateCanvasSize();
+            updateComponentTransforms();
+            redraw();
+        }, 150);
+
+        document.getElementById('btnWire').addEventListener('click', () => setMode('wire'));
+        document.getElementById('btnMove').addEventListener('click', () => setMode('move'));
+        document.getElementById('btnDelete').addEventListener('click', () => setMode('delete'));
+
+        document.getElementById('btnClear').addEventListener('click', clearAll);
+        document.getElementById('btnExport').addEventListener('click', exportSVG);
+
+        document.getElementById('zoomIn').addEventListener('touchstart', (e) => { e.preventDefault();
+            document.getElementById('zoomIn').click(); });
+        document.getElementById('zoomOut').addEventListener('touchstart', (e) => { e.preventDefault();
+            document.getElementById('zoomOut').click(); });
+        document.getElementById('zoomReset').addEventListener('touchstart', (e) => { e.preventDefault();
+            document.getElementById('zoomReset').click(); });
+
+        setMode('wire');
+
+        setTimeout(() => {
+            updateCanvasSize();
+            viewX = -100;
+            viewY = -50;
+            updateComponentTransforms();
+            redraw();
+            updateZoomIndicator();
+        }, 100);
+
+        showToast('🔗 Pinch to zoom · Two-finger pan · Components scale with zoom', 4000);
+        console.log('⚡ Zoom fixed: Components now scale and move with zoom/pan');
+        console.log('   • Pinch to zoom in/out');
+        console.log('   • Two-finger drag to pan');
+        console.log('   • Components scale proportionally');
+        console.log('   • Alignment guides work at all zoom levels');
+    </script>
+</body>
+</html>
