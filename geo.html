@@ -19,39 +19,34 @@
 
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background: #0f172a;
-            color: #f1f5f9;
+            background: #1078e0;
+            color: #0f172a;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            padding: 16px;
+            height: 100vh;
             user-select: none;
             transition: background 0.3s;
         }
 
         /* ── Main Container ── */
         .app-container {
-            background: #1e293b;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
             width: 100%;
-            max-width: 1500px;
-            max-height: 98vh;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             transition: background 0.3s;
         }
 
-        /* ── Header (dark) ── */
+        /* ── Header (light) ── */
         .app-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 18px;
-            background: #0f172a;
-            border-bottom: 1px solid #334155;
+            padding: 8px;
+            background: #62919c;
+            border-bottom: 1px solid #e2e8f0;
             gap: 8px;
             flex-wrap: wrap;
             flex-shrink: 0;
@@ -62,13 +57,13 @@
             font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 10px;
-            color: #f1f5f9;
+            gap: 8px;
+            color: #0f172a;
             letter-spacing: -0.01em;
         }
         .app-title i {
-            color: #f59e0b;
-            font-size: 1.2rem;
+            color: #d97706;
+            font-size: 1rem;
         }
         .app-title span {
             background: linear-gradient(135deg, #f59e0b, #f97316);
@@ -86,14 +81,14 @@
 
         /* ── Buttons ── */
         .btn {
-            padding: 6px 12px;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            background: #1e293b;
+            padding: 6px 8px;
+            border: 1px solid #000000;
+            border-radius: 6px;
+            background: #42a1717e;
             cursor: pointer;
             font-size: 0.75rem;
             font-weight: 500;
-            color: #e2e8f0;
+            color: #6ee7b7;
             transition: all 0.15s ease;
             white-space: nowrap;
             display: inline-flex;
@@ -101,29 +96,21 @@
             gap: 6px;
             font-family: inherit;
             line-height: 1.4;
-            min-height: 32px;
+            max-height: 28px;
         }
         .btn i {
             font-size: 0.85rem;
-            color: #94a3b8;
+            color: #6ee7b7;
             transition: color 0.15s;
         }
-        .btn:hover {
-            background: #334155;
-            border-color: #475569;
-            color: #f8fafc;
-        }
-        .btn:hover i {
-            color: #e2e8f0;
-        }
         .btn.active {
-            background: #2d3748;
-            border-color: #f59e0b;
-            color: #fbbf24;
+            background: #fef3c7;
+            border-color: #d97706;
+            color: #d97706;
             box-shadow: 0 0 0 1px #f59e0b44;
         }
         .btn.active i {
-            color: #fbbf24;
+            color: #d97706;
         }
         .btn.danger {
             border-color: #7f1d1d;
@@ -144,22 +131,12 @@
         .btn.success i {
             color: #34d399;
         }
-        .btn.success:hover {
-            background: #065f46;
-            border-color: #047857;
-            color: #a7f3d0;
-        }
         .btn.violet {
             border-color: #4c1d95;
             color: #c4b5fd;
         }
         .btn.violet i {
             color: #8b5cf6;
-        }
-        .btn.violet:hover {
-            background: #4c1d95;
-            border-color: #6d28d9;
-            color: #ddd6fe;
         }
         .btn:disabled {
             opacity: 0.35;
@@ -170,7 +147,7 @@
         .separator {
             width: 1px;
             height: 26px;
-            background: #334155;
+            background: #e2e8f0;
             margin: 0 4px;
             flex-shrink: 0;
         }
@@ -189,13 +166,13 @@
             gap: 4px;
             font-size: 0.65rem;
             cursor: pointer;
-            color: #94a3b8;
+            color: #64748b;
             white-space: nowrap;
         }
         .snap-panel .toggle-label input[type="checkbox"] {
             width: 14px;
             height: 14px;
-            accent-color: #f59e0b;
+            accent-color: #d97706;
             cursor: pointer;
             filter: brightness(0.9);
         }
@@ -213,7 +190,7 @@
             flex: 1;
             min-height: 460px;
             background: #f1f5f9;
-            border-bottom: 1px solid #334155;
+            border-bottom: 1px solid #e2e8f0;
             cursor: crosshair;
             overflow: hidden;
             transition: background 0.3s;
@@ -227,28 +204,28 @@
             background: transparent;
         }
 
-        /* ── Info Panel (dark) ── */
+        /* ── Info Panel (light) ── */
         .info-panel {
             position: absolute;
             right: 16px;
             top: 16px;
-            background: rgba(15, 23, 42, 0.92);
+            background: rgba(255, 255, 255, 0.94);
             backdrop-filter: blur(12px);
             border-radius: 14px;
             padding: 12px 16px;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
             font-size: 0.72rem;
             max-width: 220px;
-            border: 1px solid #334155;
+            border: 1px solid #cbd5e1;
             z-index: 10;
             pointer-events: none;
-            color: #e2e8f0;
+            color: #334155;
         }
         .info-title {
             font-weight: 700;
             font-size: 0.8rem;
             margin-bottom: 4px;
-            color: #fbbf24;
+            color: #d97706;
         }
         .info-row {
             display: flex;
@@ -257,52 +234,52 @@
             gap: 10px;
         }
         .info-label {
-            color: #94a3b8;
+            color: #64748b;
         }
         .info-value {
             font-weight: 600;
-            color: #f1f5f9;
+            color: #0f172a;
         }
 
-        /* ── Status Bar (dark) ── */
+        /* ── Status Bar (light) ── */
         .status-bar {
             display: flex;
             justify-content: space-between;
             padding: 6px 18px;
             font-size: 0.7rem;
-            color: #94a3b8;
-            background: #0f172a;
-            border-top: 1px solid #334155;
+            color: #64748b;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
             flex-wrap: wrap;
             gap: 4px;
             flex-shrink: 0;
         }
         .status-bar #statusText {
-            color: #cbd5e1;
+            color: #475569;
         }
         .status-bar #globalStats {
             color: #64748b;
         }
 
-        /* ── Settings Panel (dark) ── */
+        /* ── Settings Panel (light) ── */
         .settings-panel {
             position: absolute;
             left: 16px;
-            bottom: 40px;
-            background: rgba(15, 23, 42, 0.96);
+            bottom: 16px;
+            background: rgba(255, 255, 255, 0.97);
             backdrop-filter: blur(14px);
             border-radius: 14px;
             padding: 14px 16px;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
             font-size: 0.7rem;
-            border: 1px solid #334155;
+            border: 1px solid #cbd5e1;
             display: none;
             z-index: 20;
             flex-direction: column;
             gap: 6px;
             min-width: 200px;
             pointer-events: auto;
-            color: #e2e8f0;
+            color: #334155;
         }
         .settings-panel.visible {
             display: flex;
@@ -318,8 +295,8 @@
         }
         .settings-panel select,
         .settings-panel input[type="number"] {
-            background: #1e293b;
-            color: #f1f5f9;
+            background: #ffffff;
+            color: #0f172a;
             border: 1px solid #475569;
             border-radius: 6px;
             padding: 3px 6px;
@@ -328,7 +305,7 @@
         }
         .settings-panel select:focus,
         .settings-panel input[type="number"]:focus {
-            border-color: #f59e0b;
+            border-color: #d97706;
         }
         .settings-row {
             display: flex;
@@ -341,11 +318,11 @@
             align-items: center;
             gap: 5px;
             cursor: pointer;
-            color: #cbd5e1;
+            color: #475569;
             font-size: 0.7rem;
         }
         .settings-row input[type="checkbox"] {
-            accent-color: #f59e0b;
+            accent-color: #d97706;
             cursor: pointer;
             width: 15px;
             height: 15px;
@@ -367,24 +344,24 @@
             background: #7f1d1d;
         }
         .settings-row .btn {
-            background: #1e293b;
+            background: #ffffff;
             border-color: #334155;
-            color: #e2e8f0;
+            color: #334155;
         }
         .settings-row .btn:hover {
-            background: #334155;
+            background: #e2e8f0;
         }
 
         .settings-hint {
             font-size: 0.6rem;
             color: #64748b;
-            border-top: 1px solid #334155;
+            border-top: 1px solid #e2e8f0;
             padding-top: 6px;
             margin-top: 4px;
             line-height: 1.4;
         }
 
-        /* ── Zoom Controls (dark) ── */
+        /* ── Zoom Controls (light) ── */
         .zoom-controls {
             position: absolute;
             right: 16px;
@@ -400,9 +377,9 @@
             font-size: 18px;
             border: 1px solid #475569;
             border-radius: 10px;
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(8px);
-            color: #e2e8f0;
+            color: #334155;
             cursor: pointer;
             transition: all 0.15s;
             display: flex;
@@ -411,9 +388,9 @@
             font-family: inherit;
         }
         .zoom-controls button:hover {
-            background: #334155;
-            border-color: #f59e0b;
-            color: #fbbf24;
+            background: #e2e8f0;
+            border-color: #d97706;
+            color: #d97706;
         }
         .zoom-controls button:active {
             transform: scale(0.94);
@@ -423,30 +400,16 @@
             position: absolute;
             left: 16px;
             top: 16px;
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(8px);
-            color: #e2e8f0;
+            color: #334155;
             padding: 4px 14px;
             border-radius: 20px;
             font-size: 0.7rem;
             font-weight: 500;
             pointer-events: none;
             z-index: 5;
-            border: 1px solid #334155;
-        }
-        .unit-badge {
-            position: absolute;
-            left: 16px;
-            bottom: 16px;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(8px);
-            color: #94a3b8;
-            padding: 3px 14px;
-            border-radius: 12px;
-            font-size: 0.6rem;
-            pointer-events: none;
-            z-index: 5;
-            border: 1px solid #334155;
+            border: 1px solid #cbd5e1;
         }
 
         /* ── Toast ── */
@@ -457,7 +420,7 @@
             transform: translateX(-50%);
             background: rgba(15, 23, 42, 0.94);
             backdrop-filter: blur(12px);
-            color: #f1f5f9;
+            color: #0f172a;
             padding: 10px 28px;
             border-radius: 12px;
             font-size: 0.85rem;
@@ -465,7 +428,7 @@
             opacity: 0;
             transition: opacity 0.35s ease, transform 0.35s ease;
             pointer-events: none;
-            border: 1px solid #334155;
+            border: 1px solid #cbd5e1;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
             transform: translateX(-50%) translateY(8px);
         }
@@ -481,11 +444,6 @@
             overflow: hidden;
         }
 
-        .app-container {
-            height: 98vh;
-            min-height: 0;
-        }
-
         .toolbar, .snap-panel, .export-group {
             min-width: 0;
         }
@@ -495,67 +453,15 @@
             height: auto;
         }
 
-        /* ── Responsive ── */
-        @media (max-width: 1024px) {
-            body { padding: 8px; }
-            .app-container { max-width: none; width: 100%; height: 98vh; max-height: none; }
-            .app-header { padding: 8px 10px; gap: 6px; }
-            .toolbar { flex: 1 1 100%; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
-            .toolbar .btn { flex: 0 0 auto; font-size: 0.68rem; padding: 6px 9px; min-height: 32px; }
-            .snap-panel { flex: 1 1 100%; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
-            .snap-panel .toggle-label { font-size: 0.6rem; flex: 0 0 auto; }
-            .export-group { flex: 1 1 100%; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
-            .export-group .btn { flex: 0 0 auto; }
-            .info-panel { right: 8px; top: 8px; max-width: 180px; font-size: 0.6rem; padding: 7px 9px; }
-            .settings-panel { left: 8px; right: 8px; bottom: 46px; min-width: 0; max-width: calc(100% - 16px); max-height: 70vh; overflow-y: auto; padding: 10px; }
-        }
 
-        @media (max-width: 700px) {
-            body { padding: 0; align-items: stretch; }
-            .app-container { width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; box-shadow: none; }
-            .app-header { padding: 6px; gap: 5px; }
-            .app-title { font-size: 0.82rem; flex: 0 0 auto; }
-            .app-title i { font-size: 0.95rem; }
-            .toolbar { gap: 5px; order: 2; }
-            .toolbar .btn { font-size: 0.62rem; padding: 7px 9px; min-height: 36px; border-radius: 9px; }
-            .toolbar .btn i { font-size: 0.72rem; }
-            .separator { height: 24px; margin: 0 1px; }
-            .snap-panel { gap: 8px; order: 3; }
-            .snap-panel .toggle-label { font-size: 0.62rem; min-height: 30px; }
-            .snap-panel .toggle-label input[type="checkbox"] { width: 18px; height: 18px; }
-            .export-group { gap: 5px; order: 4; }
-            .export-group .btn { min-height: 34px; padding: 6px 9px; }
-            .canvas-wrapper { flex: 1 1 auto; min-height: 0; height: auto; }
-            .zoom-controls { right: 10px; bottom: 10px; gap: 7px; }
-            .zoom-controls button { width: 42px; height: 42px; font-size: 17px; border-radius: 12px; }
-            .zoom-indicator { left: 10px; top: 10px; font-size: 0.65rem; padding: 5px 11px; }
-            .unit-badge { left: 10px; bottom: 10px; font-size: 0.55rem; padding: 4px 9px; }
-            .info-panel { max-width: 150px; font-size: 0.55rem; padding: 6px 8px; }
-            .status-bar { font-size: 0.58rem; padding: 5px 8px; line-height: 1.25; }
-            .status-bar #statusText { flex: 1 1 100%; }
-            .status-bar #globalStats { flex: 1 1 100%; }
-            .settings-panel { left: 8px; right: 8px; bottom: 58px; width: auto; max-width: none; max-height: 65dvh; font-size: 0.65rem; }
-            .settings-row { gap: 7px; }
-            .settings-row label { font-size: 0.65rem; min-height: 30px; }
-            .settings-row input[type="checkbox"] { width: 18px; height: 18px; }
-            .settings-panel select, .settings-panel input[type="number"] { min-height: 32px; font-size: 0.72rem; }
-            .settings-panel input[type="color"] { width: 34px; height: 34px; }
-            .settings-row .btn { min-height: 34px; font-size: 0.68rem; padding: 6px 10px; }
-            .settings-hint { font-size: 0.58rem; }
+        .settings-section-title {
+            margin: 8px 0 5px; padding: 5px 7px; border-bottom: 1px solid #d7dee7;
+            font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; color: #64748b;
         }
-
-        @media (max-width: 430px) {
-            .app-title span { display: none; }
-            .app-title { font-size: 0.9rem; }
-            .toolbar .btn { font-size: 0.58rem; padding: 7px 8px; }
-            .toolbar .btn i { margin: 0; }
-            .snap-panel { gap: 7px; }
-            .export-group .btn { font-size: 0.58rem; padding: 6px 8px; }
-        }
+        .settings-section-title:first-child { margin-top: 0; }
 
         @media (orientation: landscape) and (max-width: 900px) {
             .app-header { padding: 4px 6px; }
-            .toolbar, .snap-panel, .export-group { flex-wrap: nowrap; }
             .canvas-wrapper { min-height: 0; }
             .status-bar { padding: 3px 8px; }
             .status-bar #statusText, .status-bar #globalStats { flex: 0 1 auto; }
@@ -567,7 +473,7 @@
             height: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: #1e293b;
+            background: #ffffff;
         }
         ::-webkit-scrollbar-thumb {
             background: #475569;
@@ -593,6 +499,7 @@
             <div class="toolbar">
                 <button class="btn" id="modeSelect"><i class="fas fa-mouse-pointer"></i> Select</button>
                 <button class="btn active" id="modePolygon"><i class="fas fa-draw-polygon"></i> Poly</button>
+                <button class="btn" id="btnNewPoly" title="Finish current poly and start a new poly"><i class="fas fa-plus"></i> New</button>
                 <button class="btn" id="modeCircle"><i class="fas fa-circle"></i> Circle</button>
                 <button class="btn" id="modeSplit"><i class="fas fa-cut"></i> Split</button>
                 <button class="btn" id="modeDelete"><i class="fas fa-trash"></i> Del</button>
@@ -603,12 +510,6 @@
                 <button class="btn" id="btnUndo" disabled><i class="fas fa-undo-alt"></i> Undo</button>
                 <button class="btn" id="btnRedo" disabled><i class="fas fa-redo-alt"></i> Redo</button>
                 <button class="btn danger" id="btnClear"><i class="fas fa-eraser"></i> Clear</button>
-            </div>
-
-            <div class="snap-panel">
-                <span style="font-size:0.6rem;font-weight:500;color:#94a3b8;">Snap:</span>
-                <label class="toggle-label"><input type="checkbox" id="snapGrid"> <i class="fas fa-th"></i> Grid</label>
-                <label class="toggle-label"><input type="checkbox" id="snapLine"> <i class="fas fa-grip-lines"></i> Line</label>
             </div>
 
             <div class="export-group">
@@ -630,7 +531,6 @@
             </div>
 
             <div class="zoom-indicator" id="zoomIndicator">100%</div>
-            <div class="unit-badge"><i class="fas fa-ruler"></i> Units: inches</div>
 
             <div class="info-panel" id="infoPanel">
                 <div class="info-title"><i class="fas fa-chart-simple"></i> Info</div>
@@ -638,29 +538,30 @@
             </div>
 
             <div class="settings-panel" id="settingsPanel">
-                <div class="settings-row"><b>Line:</b> <input type="color" id="lineColor" value="#3a3a3a"> Width <input type="number" id="lineWidth" value="2.2" step="0.1" min="0.5" max="10" style="width:52px">
+                <div class="settings-section-title"><i class="fas fa-sliders-h"></i> DISPLAY SETTINGS</div>
+                <div class="settings-row"><b>Line: </b>Color <input type="color" id="lineColor" value="#3a3a3a"> Width <input type="number" id="lineWidth" value="2.2" step="0.1" min="0.5" max="10" style="width:52px">
                     <select id="lineDash"><option value="">Solid</option><option value="6,4">Dashed</option><option value="2,2">Dotted</option><option value="10,5,2,5">Dash-dot</option></select>
                 </div>
                 <div class="settings-row"><b>Point:</b> Style <select id="pointStyle"><option value="circle">● Circle</option><option value="square">■ Square</option><option value="cross">✚ Cross</option></select> Size <input type="number" id="pointSize" value="7" min="3" max="20" style="width:52px"></div>
-                <div class="settings-row"><b>Grid:</b> <select id="gridStyle"><option value="lines">Graph Paper</option><option value="dots">Dots</option><option value="isometric">Isometric</option></select>
-                    Minor <input type="number" id="gridMinorWidth" value="0.5" step="0.1" min="0.1" max="5" style="width:48px">
-                    Medium <input type="number" id="gridMediumWidth" value="0.8" step="0.1" min="0.1" max="5" style="width:48px">
-                    Major <input type="number" id="gridMajorWidth" value="1.5" step="0.1" min="0.1" max="5" style="width:48px">
-                </div>
-                <div class="settings-row"><label><i class="fas fa-moon"></i> <input type="checkbox" id="darkModeToggle"> Dark UI</label></div>
-                <div class="settings-row"><label><i class="fas fa-align-left"></i> <input type="checkbox" id="showAlignment" checked> Alignment</label></div>
-                <div class="settings-row"><label><i class="fas fa-vector-square"></i> <input type="checkbox" id="showPerimArea"> P/A</label></div>
+                <div class="settings-row"><label><i class="fas fa-th"></i><input type="checkbox" id="showGrid" checked> Show</label> <select id="gridStyle"><option value="lines">Graph Paper</option><option value="dots">Dots</option><option value="isometric">Isometric</option></select></div>
+                <div class="settings-row"><label><i class="fas fa-magnet"></i><input type="checkbox" id="snapGrid">Grid Snap</label> <label><input type="checkbox" id="snapLine">Line Snap</label></div>
+                <div class="settings-row"><label><i class="fas fa-align-left"></i><input type="checkbox" id="showAlignment" checked> Alignment</label></div>
+                <div class="settings-row"><label><i class="fas fa-vector-square"></i><input type="checkbox" id="showPerimArea"> P/A</label></div>
                 <div class="settings-row"><label><i class="fas fa-tag"></i> <input type="checkbox" id="showLabels" checked> Labels</label></div>
-                <div class="settings-row"><label><i class="fas fa-arrows-left-right"></i> <input type="checkbox" id="showDistances" checked> Dist</label></div>
-                <div class="settings-row"><label><i class="fas fa-angle-double-up"></i> <input type="checkbox" id="showAngles" checked> Angles</label></div>
-                <div class="settings-row"><button class="btn danger" id="btnClearHistory"><i class="fas fa-history"></i> Clear History</button></div>
-                <div class="settings-row"><button class="btn" id="btnResetSettings"><i class="fas fa-undo-alt"></i> Reset</button></div>
+                <div class="settings-row"><label><i class="fas fa-arrows-left-right"></i><input type="checkbox" id="showDistances" checked> Dist</label></div>
+                <div class="settings-row"><label><i class="fas fa-angle-double-up"></i><input type="checkbox" id="showAngles" checked> Angles</label></div>
+                <div class="settings-section-title"><i class="fas fa-tools"></i> ACTIONS</div>
+                <div class="settings-row">
+                    <button class="btn danger" id="btnClearHistory"><i class="fas fa-history"></i> Clear History</button>
+                    <button class="btn" id="btnResetSettings"><i class="fas fa-undo-alt"></i> Reset</button>
+                </div>
                 <div class="settings-hint"><i class="fas fa-mouse-pointer"></i> Scroll to pan · Ctrl+scroll to zoom · Middle-drag to pan</div>
             </div>
         </div>
 
         <!-- Status Bar -->
         <div class="status-bar">
+            <span><i class="fas fa-ruler"></i> Units: inches</span>
             <span id="statusText"><i class="fas fa-draw-polygon"></i> Polygon – Click to place points</span>
             <span id="globalStats"><i class="fas fa-chart-pie"></i> Polygons:0 | Circles:0 | History:0</span>
         </div>
@@ -756,16 +657,15 @@
                 snapParallel = false,
                 snapExtend = false,
                 snapObj = false;
-            let darkMode = false;
             let lineColor = '#3a3a3a',
                 lineWidthVal = 2.2,
                 lineDash = [];
             let pointStyle = 'circle',
                 pointRadius = 7;
+            let showGrid = true;
             let gridStyle = 'lines';
-            let gridMinorWidth = 0.5,
-                gridMediumWidth = 0.8,
-                gridMajorWidth = 1.5;
+            const GRID_MEDIUM_WIDTH = 0.8;
+            const GRID_MAJOR_WIDTH = 1.5;
             let showAlignmentGuides = true,
                 showPerimeterArea = false;
 
@@ -1595,12 +1495,16 @@
                 updateStatusBar();
             }
 
-            function renderToContext(context, width, height, skipGrid) {
-                // Workspace background is always light
-                context.fillStyle = '#f1f5f9';
-                context.fillRect(0, 0, width, height);
+            function renderToContext(context, width, height, skipGrid, transparentBackground = false) {
+                // Keep the normal workspace light, but allow PDF export to remain transparent.
+                if (!transparentBackground) {
+                    context.fillStyle = '#f1f5f9';
+                    context.fillRect(0, 0, width, height);
+                } else {
+                    context.clearRect(0, 0, width, height);
+                }
 
-                if (!skipGrid) drawGrid(context, width, height);
+                if (!skipGrid && showGrid) drawGrid(context, width, height);
                 drawFreeformPaths(context);
                 drawAllEdges(context);
                 drawEllipses(context);
@@ -1620,126 +1524,98 @@
                 if (currentFreeform && currentFreeform.points.length > 0) drawFreeformPreview(context);
             }
 
-            // ── Grid (light workspace) ──
+            // ── Grid (professional adaptive CAD-style workspace) ──
             function drawGrid(context, w, h) {
                 const topLeft = screenToWorld(0, 0);
                 const bottomRight = screenToWorld(w, h);
-                const xStart = Math.floor(topLeft.x / MAJOR_GRID) * MAJOR_GRID;
-                const yStart = Math.floor(topLeft.y / MAJOR_GRID) * MAJOR_GRID;
-                const xEnd = Math.ceil(bottomRight.x / MAJOR_GRID) * MAJOR_GRID;
-                const yEnd = Math.ceil(bottomRight.y / MAJOR_GRID) * MAJOR_GRID;
+                const xStart = Math.floor(topLeft.x / MINOR_GRID) * MINOR_GRID;
+                const yStart = Math.floor(topLeft.y / MINOR_GRID) * MINOR_GRID;
+                const xEnd = Math.ceil(bottomRight.x / MINOR_GRID) * MINOR_GRID;
+                const yEnd = Math.ceil(bottomRight.y / MINOR_GRID) * MINOR_GRID;
+                const screenMinor = MINOR_GRID * zoom;
+                const mediumStep = MINOR_GRID * 2; // 1 ft
+                const referenceStep = MAJOR_GRID * 5; // 10 ft
 
                 if (gridStyle === 'lines') {
-                    const minorColor = 'rgba(200,200,200,0.5)';
-                    const majorColor = 'rgba(160,160,160,0.7)';
-                    context.lineWidth = gridMinorWidth;
-                    for (let x = xStart - MAJOR_GRID; x <= xEnd + MAJOR_GRID; x += MINOR_GRID) {
-                        if (x % MAJOR_GRID === 0) continue;
-                        const sx = (x - viewX) * zoom;
-                        if (sx < -10 || sx > w + 10) continue;
-                        context.strokeStyle = minorColor;
-                        context.beginPath();
-                        context.moveTo(sx, 0);
-                        context.lineTo(sx, h);
-                        context.stroke();
-                    }
-                    for (let y = yStart - MAJOR_GRID; y <= yEnd + MAJOR_GRID; y += MINOR_GRID) {
-                        if (y % MAJOR_GRID === 0) continue;
-                        const sy = (y - viewY) * zoom;
-                        if (sy < -10 || sy > h + 10) continue;
-                        context.strokeStyle = minorColor;
-                        context.beginPath();
-                        context.moveTo(0, sy);
-                        context.lineTo(w, sy);
-                        context.stroke();
+                    // 6-inch grid: merged with the medium grid so every 6-inch line
+                    // has the same thickness and dash pattern. 2-foot lines remain major.
+                    const gridVisible = screenMinor >= 3;
+                    const gridAlpha = Math.max(0.22, Math.min(0.55, 0.42 * Math.min(1.3, zoom)));
+                    const majorAlpha = Math.max(0.42, Math.min(0.72, 0.58 * Math.min(1.15, zoom)));
+                    const refAlpha = Math.max(0.55, Math.min(0.82, 0.68 * Math.min(1.1, zoom)));
+
+                    // Unified 6-inch grid — same thickness/style for every 6-inch division.
+                    if (gridVisible) {
+                        context.setLineDash([4, 4]);
+                        context.lineWidth = Math.max(0.55, GRID_MEDIUM_WIDTH);
+                        context.strokeStyle = `rgba(125,125,125,${gridAlpha})`;
+                        for (let x = xStart; x <= xEnd; x += MINOR_GRID) {
+                            if (x % MAJOR_GRID === 0) continue;
+                            const sx = (x - viewX) * zoom;
+                            if (sx < -3 || sx > w + 3) continue;
+                            context.beginPath(); context.moveTo(sx, 0); context.lineTo(sx, h); context.stroke();
+                        }
+                        for (let y = yStart; y <= yEnd; y += MINOR_GRID) {
+                            if (y % MAJOR_GRID === 0) continue;
+                            const sy = (y - viewY) * zoom;
+                            if (sy < -3 || sy > h + 3) continue;
+                            context.beginPath(); context.moveTo(0, sy); context.lineTo(w, sy); context.stroke();
+                        }
                     }
 
-                    context.lineWidth = gridMediumWidth;
-                    context.setLineDash([5, 4]);
-                    for (let x = xStart - MAJOR_GRID; x <= xEnd + MAJOR_GRID; x += MINOR_GRID * 2) {
-                        if (x % MAJOR_GRID === 0) continue;
-                        const sx = (x - viewX) * zoom;
-                        if (sx < -10 || sx > w + 10) continue;
-                        context.strokeStyle = majorColor;
-                        context.beginPath();
-                        context.moveTo(sx, 0);
-                        context.lineTo(sx, h);
-                        context.stroke();
-                    }
-                    for (let y = yStart - MAJOR_GRID; y <= yEnd + MAJOR_GRID; y += MINOR_GRID * 2) {
-                        if (y % MAJOR_GRID === 0) continue;
-                        const sy = (y - viewY) * zoom;
-                        if (sy < -10 || sy > h + 10) continue;
-                        context.strokeStyle = majorColor;
-                        context.beginPath();
-                        context.moveTo(0, sy);
-                        context.lineTo(w, sy);
-                        context.stroke();
-                    }
-
+                    // 2-foot major grid.
                     context.setLineDash([]);
-                    context.lineWidth = gridMajorWidth;
-                    for (let x = xStart - MAJOR_GRID; x <= xEnd + MAJOR_GRID; x += MAJOR_GRID) {
+                    context.lineWidth = Math.max(0.8, GRID_MAJOR_WIDTH);
+                    context.strokeStyle = `rgba(105,105,105,${majorAlpha})`;
+                    for (let x = Math.floor(xStart / MAJOR_GRID) * MAJOR_GRID; x <= xEnd; x += MAJOR_GRID) {
                         const sx = (x - viewX) * zoom;
-                        if (sx < -10 || sx > w + 10) continue;
-                        context.strokeStyle = majorColor;
-                        context.beginPath();
-                        context.moveTo(sx, 0);
-                        context.lineTo(sx, h);
-                        context.stroke();
+                        if (sx < -4 || sx > w + 4) continue;
+                        context.beginPath(); context.moveTo(sx, 0); context.lineTo(sx, h); context.stroke();
                     }
-                    for (let y = yStart - MAJOR_GRID; y <= yEnd + MAJOR_GRID; y += MAJOR_GRID) {
+                    for (let y = Math.floor(yStart / MAJOR_GRID) * MAJOR_GRID; y <= yEnd; y += MAJOR_GRID) {
                         const sy = (y - viewY) * zoom;
-                        if (sy < -10 || sy > h + 10) continue;
-                        context.strokeStyle = majorColor;
-                        context.beginPath();
-                        context.moveTo(0, sy);
-                        context.lineTo(w, sy);
-                        context.stroke();
+                        if (sy < -4 || sy > h + 4) continue;
+                        context.beginPath(); context.moveTo(0, sy); context.lineTo(w, sy); context.stroke();
+                    }
+
+                    // 10-foot reference grid: subtle but clearly stronger.
+                    context.lineWidth = Math.max(1.0, GRID_MAJOR_WIDTH + 0.15);
+                    context.strokeStyle = `rgba(80,80,80,${refAlpha})`;
+                    for (let x = Math.floor(xStart / referenceStep) * referenceStep; x <= xEnd; x += referenceStep) {
+                        const sx = (x - viewX) * zoom;
+                        if (sx < -5 || sx > w + 5) continue;
+                        context.beginPath(); context.moveTo(sx, 0); context.lineTo(sx, h); context.stroke();
+                    }
+                    for (let y = Math.floor(yStart / referenceStep) * referenceStep; y <= yEnd; y += referenceStep) {
+                        const sy = (y - viewY) * zoom;
+                        if (sy < -5 || sy > h + 5) continue;
+                        context.beginPath(); context.moveTo(0, sy); context.lineTo(w, sy); context.stroke();
                     }
                 } else if (gridStyle === 'dots') {
-                    const minorColor = 'rgba(180,180,180,0.4)';
-                    const majorColor = 'rgba(140,140,140,0.6)';
-                    for (let x = xStart - MAJOR_GRID; x <= xEnd + MAJOR_GRID; x += MINOR_GRID) {
-                        for (let y = yStart - MAJOR_GRID; y <= yEnd + MAJOR_GRID; y += MINOR_GRID) {
-                            const sx = (x - viewX) * zoom,
-                                sy = (y - viewY) * zoom;
+                    const minorColor = 'rgba(150,150,150,0.35)';
+                    const majorColor = 'rgba(100,100,100,0.62)';
+                    const step = screenMinor < 5 ? mediumStep : MINOR_GRID;
+                    for (let x = Math.floor(xStart / step) * step; x <= xEnd; x += step) {
+                        for (let y = Math.floor(yStart / step) * step; y <= yEnd; y += step) {
+                            const sx = (x - viewX) * zoom, sy = (y - viewY) * zoom;
                             if (sx < -5 || sx > w + 5 || sy < -5 || sy > h + 5) continue;
-                            if (x % MAJOR_GRID === 0 && y % MAJOR_GRID === 0) {
-                                context.fillStyle = majorColor;
-                                context.beginPath();
-                                context.arc(sx, sy, 2.5 * Math.min(zoom, 1.5), 0, 2 * Math.PI);
-                                context.fill();
-                            } else {
-                                context.fillStyle = minorColor;
-                                context.beginPath();
-                                context.arc(sx, sy, 1.2 * Math.min(zoom, 1.5), 0, 2 * Math.PI);
-                                context.fill();
-                            }
+                            const major = x % MAJOR_GRID === 0 && y % MAJOR_GRID === 0;
+                            context.fillStyle = major ? majorColor : minorColor;
+                            context.beginPath(); context.arc(sx, sy, major ? 2.2 : 1.1, 0, 2 * Math.PI); context.fill();
                         }
                     }
                 } else if (gridStyle === 'isometric') {
-                    context.strokeStyle = 'rgba(180,180,180,0.5)';
-                    context.lineWidth = 0.8;
+                    context.strokeStyle = 'rgba(150,150,150,0.42)';
+                    context.lineWidth = 0.7;
                     const step = MAJOR_GRID;
                     const half = Math.max(h, w) * 2;
                     for (let i = -half; i < half + step; i += step) {
-                        const sx1 = (i - viewX) * zoom,
-                            sy1 = (-viewY) * zoom;
-                        const sx2 = (i + half - viewX) * zoom,
-                            sy2 = (half - viewY) * zoom;
-                        context.beginPath();
-                        context.moveTo(sx1, sy1);
-                        context.lineTo(sx2, sy2);
-                        context.stroke();
-                        const sx3 = (i - viewX) * zoom,
-                            sy3 = (-viewY) * zoom;
-                        const sx4 = (i - half - viewX) * zoom,
-                            sy4 = (half - viewY) * zoom;
-                        context.beginPath();
-                        context.moveTo(sx3, sy3);
-                        context.lineTo(sx4, sy4);
-                        context.stroke();
+                        const sx1 = (i - viewX) * zoom, sy1 = (-viewY) * zoom;
+                        const sx2 = (i + half - viewX) * zoom, sy2 = (half - viewY) * zoom;
+                        context.beginPath(); context.moveTo(sx1, sy1); context.lineTo(sx2, sy2); context.stroke();
+                        const sx3 = (i - viewX) * zoom, sy3 = (-viewY) * zoom;
+                        const sx4 = (i - half - viewX) * zoom, sy4 = (half - viewY) * zoom;
+                        context.beginPath(); context.moveTo(sx3, sy3); context.lineTo(sx4, sy4); context.stroke();
                     }
                 }
             }
@@ -2645,7 +2521,6 @@
 
             // ── PDF ──
             function exportPDF() {
-                const infoText = infoContent.innerText || 'No shapes';
                 const date = new Date().toLocaleString();
                 const rect = canvas.parentElement.getBoundingClientRect();
                 const w = rect.width;
@@ -2658,34 +2533,91 @@
                 offscreen.height = pdfHeight;
                 const offCtx = offscreen.getContext('2d');
                 offCtx.scale(scale, scale);
-                renderToContext(offCtx, w, h, true);
+                renderToContext(offCtx, w, h, true, true);
+
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF('l', 'pt', 'letter');
                 const pageWidth = pdf.internal.pageSize.getWidth();
                 const pageHeight = pdf.internal.pageSize.getHeight();
                 const margin = 40;
                 const maxImgWidth = pageWidth - 2 * margin;
-                const maxImgHeight = pageHeight - 2 * margin - 60;
+                // Reserve space below the drawing for a properly aligned info table.
+                const maxImgHeight = pageHeight - 2 * margin - 150;
                 const imgData = offscreen.toDataURL('image/png');
                 const img = new Image();
                 img.src = imgData;
+
                 img.onload = function() {
                     const imgAspect = img.width / img.height;
                     let drawWidth = maxImgWidth;
                     let drawHeight = drawWidth / imgAspect;
-                    if (drawHeight > maxImgHeight) { drawHeight = maxImgHeight;
-                        drawWidth = drawHeight * imgAspect; }
+                    if (drawHeight > maxImgHeight) {
+                        drawHeight = maxImgHeight;
+                        drawWidth = drawHeight * imgAspect;
+                    }
+
                     const x = (pageWidth - drawWidth) / 2;
                     const y = margin;
                     pdf.addImage(imgData, 'PNG', x, y, drawWidth, drawHeight);
-                    const infoY = y + drawHeight + 20;
+
+                    // Export the Info panel as structured rows instead of innerText.
+                    // This keeps every label/value pair in consistent columns.
+                    let infoY = y + drawHeight + 24;
+                    pdf.setFont('helvetica', 'bold');
                     pdf.setFontSize(12);
                     pdf.setTextColor(40);
                     pdf.text('Drawing Info', margin, infoY);
-                    pdf.setFontSize(10);
-                    pdf.setTextColor(80);
-                    const lines = pdf.splitTextToSize(infoText, pageWidth - 2 * margin);
-                    pdf.text(lines, margin, infoY + 16);
+                    infoY += 16;
+
+                    const infoNodes = infoContent.querySelectorAll('.info-title, .info-row');
+                    const labelX = margin + 4;
+                    const valueX = margin + 150;
+                    const rightLimit = pageWidth - margin;
+                    const rowGap = 13;
+
+                    if (!infoNodes.length) {
+                        pdf.setFont('helvetica', 'normal');
+                        pdf.setFontSize(9);
+                        pdf.setTextColor(80);
+                        pdf.text('No shapes', labelX, infoY);
+                    } else {
+                        infoNodes.forEach(node => {
+                            // Start a new page if the info section is long.
+                            if (infoY > pageHeight - 45) {
+                                pdf.addPage();
+                                infoY = margin;
+                                pdf.setFont('helvetica', 'bold');
+                                pdf.setFontSize(12);
+                                pdf.setTextColor(40);
+                                pdf.text('Drawing Info (continued)', margin, infoY);
+                                infoY += 18;
+                            }
+
+                            if (node.classList.contains('info-title')) {
+                                const title = node.textContent.trim();
+                                infoY += 4;
+                                pdf.setFont('helvetica', 'bold');
+                                pdf.setFontSize(10);
+                                pdf.setTextColor(40);
+                                pdf.text(title, labelX, infoY);
+                                infoY += rowGap;
+                            } else {
+                                const label = node.querySelector('.info-label')?.textContent.trim() || '';
+                                const value = node.querySelector('.info-value')?.textContent.trim() || '';
+                                pdf.setFont('helvetica', 'normal');
+                                pdf.setFontSize(9);
+                                pdf.setTextColor(90);
+                                pdf.text(label, labelX, infoY);
+                                pdf.setFont('helvetica', 'bold');
+                                pdf.setTextColor(50);
+                                // Keep all values left-aligned in a fixed column.
+                                pdf.text(value, valueX, infoY, { maxWidth: rightLimit - valueX });
+                                infoY += rowGap;
+                            }
+                        });
+                    }
+
+                    pdf.setFont('helvetica', 'normal');
                     pdf.setFontSize(8);
                     pdf.setTextColor(150);
                     pdf.text('Generated: ' + date, pageWidth - margin, pageHeight - 20, { align: 'right' });
@@ -2700,13 +2632,13 @@
                 const state = captureState();
                 state._meta = {
                     version: '1.0',
-                    darkMode,
                     lineColor,
                     lineWidthVal,
                     lineDash,
                     pointStyle,
                     pointRadius,
                     gridStyle,
+                    showGrid,
                     showLabels,
                     showDistances,
                     showAngles,
@@ -2732,10 +2664,6 @@
                         restoreState(data);
                         if (data._meta) {
                             const m = data._meta;
-                            if (m.darkMode !== undefined) {
-                                darkMode = m.darkMode;
-                                document.getElementById('darkModeToggle').checked = darkMode;
-                            }
                             if (m.lineColor) { lineColor = m.lineColor;
                                 document.getElementById('lineColor').value = lineColor; }
                             if (m.lineWidthVal) { lineWidthVal = m.lineWidthVal;
@@ -2748,6 +2676,8 @@
                                 document.getElementById('pointSize').value = pointRadius; }
                             if (m.gridStyle) { gridStyle = m.gridStyle;
                                 document.getElementById('gridStyle').value = gridStyle; }
+                            if (m.showGrid !== undefined) { showGrid = m.showGrid;
+                                document.getElementById('showGrid').checked = showGrid; }
                             if (m.showLabels !== undefined) { showLabels = m.showLabels;
                                 document.getElementById('showLabels').checked = showLabels; }
                             if (m.showDistances !== undefined) { showDistances = m.showDistances;
@@ -2776,13 +2706,13 @@
                     const state = captureState();
                     state._meta = {
                         version: '1.0',
-                        darkMode,
-                        lineColor,
+                            lineColor,
                         lineWidthVal,
                         lineDash,
                         pointStyle,
                         pointRadius,
                         gridStyle,
+                        showGrid,
                         showLabels,
                         showDistances,
                         showAngles,
@@ -2802,10 +2732,6 @@
                     restoreState(data);
                     if (data._meta) {
                         const m = data._meta;
-                        if (m.darkMode !== undefined) {
-                            darkMode = m.darkMode;
-                            document.getElementById('darkModeToggle').checked = darkMode;
-                        }
                         if (m.lineColor) { lineColor = m.lineColor;
                             document.getElementById('lineColor').value = lineColor; }
                         if (m.lineWidthVal) { lineWidthVal = m.lineWidthVal;
@@ -2964,52 +2890,77 @@
             }
 
             function deleteTarget(worldPos) {
+                // Delete exactly one object per click. Points are checked last so a
+                // click on a line does not accidentally delete an endpoint and all
+                // of its connected lines.
                 const annotationIndex = findAnnotationAt(worldPos);
                 if (annotationIndex !== null) {
                     annotations.splice(annotationIndex, 1);
                     showToast('🗑️ Text deleted');
                     return true;
                 }
+
                 const dimensionIndex = findDimensionAt(worldPos);
                 if (dimensionIndex !== null) {
                     dimensions.splice(dimensionIndex, 1);
                     showToast('🗑️ Dimension deleted');
                     return true;
                 }
-                const pointHit = Math.min(9, Math.max(4, 8 / Math.max(zoom, 0.25)));
-                const nearby = findNearby(worldPos, pointHit);
-                if (nearby !== null) {
-                    deletePoint(nearby);
-                    showToast('🗑️ Point deleted');
-                    return true;
-                }
-                const seg = findClosestSegment(worldPos.x, worldPos.y, Math.min(10, Math.max(5, 10 / Math.max(zoom,
-                0.25))));
-                if (seg) {
-                    removeConnection(seg.i, seg.j);
-                    showToast('🗑️ Line deleted');
-                    return true;
-                }
+
                 const circ = findClosestCircle(worldPos.x, worldPos.y);
                 if (circ) {
                     circles.splice(circ.circleIdx, 1);
                     showToast('🗑️ Circle deleted');
                     return true;
                 }
+
+                const freeHit = Math.min(10, Math.max(5, 10 / Math.max(zoom, 0.25)));
                 for (let fi = 0; fi < freeformPaths.length; fi++) {
                     const f = freeformPaths[fi];
-                    if (f.points.length < 2) continue;
                     for (let i = 0; i < f.points.length - 1; i++) {
-                        const p1 = f.points[i],
-                            p2 = f.points[i + 1];
-                        const res = pointToSegmentDist(worldPos.x, worldPos.y, p1, p2);
-                        if (res.dist < Math.min(10, Math.max(5, 10 / Math.max(zoom, 0.25)))) {
+                        const res = pointToSegmentDist(worldPos.x, worldPos.y, f.points[i], f.points[i + 1]);
+                        if (res.dist <= freeHit) {
                             freeformPaths.splice(fi, 1);
                             showToast('🗑️ Freeform deleted');
                             return true;
                         }
                     }
                 }
+
+                const lineHit = Math.min(8, Math.max(4, 8 / Math.max(zoom, 0.25)));
+                const seg = findClosestSegment(worldPos.x, worldPos.y, lineHit);
+                if (seg) {
+                    removeConnection(seg.i, seg.j);
+                    // Remove the same edge from polygon paths when applicable.
+                    polygons = polygons.filter(poly => {
+                        const idx = poly.indices;
+                        let removed = false;
+                        const out = [];
+                        for (let i = 0; i < idx.length; i++) {
+                            const a = idx[i], b = idx[(i + 1) % idx.length];
+                            if ((a === seg.i && b === seg.j) || (a === seg.j && b === seg.i)) { removed = true; continue; }
+                            out.push(a);
+                        }
+                        if (removed) {
+                            poly.indices = out;
+                            return out.length >= 3;
+                        }
+                        return true;
+                    });
+                    showToast('🗑️ Line deleted');
+                    return true;
+                }
+
+                // A point requires a tighter hit area. Deleting a point necessarily
+                // removes its connected lines because those connections reference it.
+                const pointHit = Math.min(7, Math.max(4, 6 / Math.max(zoom, 0.25)));
+                const nearby = findNearby(worldPos, pointHit);
+                if (nearby !== null) {
+                    deletePoint(nearby);
+                    showToast('🗑️ Point deleted');
+                    return true;
+                }
+
                 showToast('Nothing to delete');
                 return false;
             }
@@ -3975,6 +3926,35 @@
 
             document.getElementById('modeSelect').onclick = () => setMode('select');
             document.getElementById('modePolygon').onclick = () => setMode('polygon');
+
+            // New Poly: same behavior as double-clicking while drawing a polygon.
+            // It ends the current open polyline without closing it, then keeps
+            // the Poly tool active so the next canvas click starts a new poly.
+            document.getElementById('btnNewPoly').onclick = () => {
+                if (toolMode !== 'polygon') {
+                    setMode('polygon');
+                    showToast('➕ New poly ready');
+                    return;
+                }
+
+                if (currentPolyline && currentPolyline.length >= 2) {
+                    withHistory(() => {
+                        const a = currentPolyline[currentPolyline.length - 1];
+                        const b = currentPolyline[currentPolyline.length - 2];
+                        if (a === b) currentPolyline.pop();
+                        currentPolyline = null;
+                    });
+                    render();
+                    updateStatusBar();
+                    showToast('➕ New poly');
+                } else {
+                    currentPolyline = null;
+                    render();
+                    updateStatusBar();
+                    showToast('➕ New poly ready');
+                }
+            };
+
             document.getElementById('modeCircle').onclick = () => setMode('circle');
             document.getElementById('modeSplit').onclick = () => setMode('split');
             document.getElementById('modeDelete').onclick = () => setMode('delete');
@@ -4000,11 +3980,8 @@
                 lineDash = [];
                 pointStyle = 'circle';
                 pointRadius = 7;
+                showGrid = true;
                 gridStyle = 'lines';
-                gridMinorWidth = 0.5;
-                gridMediumWidth = 0.8;
-                gridMajorWidth = 1.5;
-                darkMode = false;
                 showAlignmentGuides = true;
                 showPerimeterArea = false;
                 showLabels = true;
@@ -4018,11 +3995,8 @@
                 document.getElementById('lineDash').value = '';
                 document.getElementById('pointStyle').value = pointStyle;
                 document.getElementById('pointSize').value = pointRadius;
+                document.getElementById('showGrid').checked = true;
                 document.getElementById('gridStyle').value = gridStyle;
-                document.getElementById('gridMinorWidth').value = gridMinorWidth;
-                document.getElementById('gridMediumWidth').value = gridMediumWidth;
-                document.getElementById('gridMajorWidth').value = gridMajorWidth;
-                document.getElementById('darkModeToggle').checked = false;
                 document.getElementById('showAlignment').checked = true;
                 document.getElementById('showPerimArea').checked = false;
                 document.getElementById('showLabels').checked = true;
@@ -4053,20 +4027,6 @@
 
             document.getElementById('btnSettings').onclick = () => settingsPanel.classList.toggle('visible');
 
-            document.getElementById('darkModeToggle').onchange = function() {
-                darkMode = this.checked;
-                // Dark mode only affects the UI chrome; canvas stays light.
-                document.querySelector('.app-container').style.background = darkMode ? '#0f172a' : '#1e293b';
-                document.querySelector('.app-header').style.background = darkMode ? '#0a0f1a' : '#0f172a';
-                document.querySelector('.status-bar').style.background = darkMode ? '#0a0f1a' : '#0f172a';
-                document.querySelector('.status-bar').style.borderTopColor = darkMode ? '#1e293b' : '#334155';
-                document.querySelector('.app-header').style.borderBottomColor = darkMode ? '#1e293b' : '#334155';
-                document.querySelector('.canvas-wrapper').style.borderBottomColor = darkMode ? '#1e293b' : '#334155';
-                autoSave();
-            };
-            // Initialize dark mode state from toggle
-            document.getElementById('darkModeToggle').dispatchEvent(new Event('change'));
-
             document.getElementById('lineColor').onchange = e => { lineColor = e.target.value;
                 render();
                 autoSave(); };
@@ -4083,16 +4043,10 @@
             document.getElementById('pointSize').onchange = e => { pointRadius = +e.target.value;
                 render();
                 autoSave(); };
+            document.getElementById('showGrid').onchange = e => { showGrid = e.target.checked;
+                render();
+                autoSave(); };
             document.getElementById('gridStyle').onchange = e => { gridStyle = e.target.value;
-                render();
-                autoSave(); };
-            document.getElementById('gridMinorWidth').onchange = e => { gridMinorWidth = +e.target.value;
-                render();
-                autoSave(); };
-            document.getElementById('gridMediumWidth').onchange = e => { gridMediumWidth = +e.target.value;
-                render();
-                autoSave(); };
-            document.getElementById('gridMajorWidth').onchange = e => { gridMajorWidth = +e.target.value;
                 render();
                 autoSave(); };
             document.getElementById('showAlignment').onchange = e => { showAlignmentGuides = e.target.checked;
